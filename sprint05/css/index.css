@@ -1,0 +1,14 @@
+body {
+	margin: 20px;
+}
+
+#control {
+}
+
+#output {
+	margin-top: 20px;
+}
+
+.ai {
+	color: red;
+}
