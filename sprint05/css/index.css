@@ -12,3 +12,41 @@ body {
 .ai {
 	color: red;
 }
+
+#Human-config{
+	color: black;
+	font-size:20px;
+}
+#AI-config{
+	color: red;
+	font-size: 20px;
+}
+.pos{
+	padding:20px;
+	position:absolute;
+	top:5%;
+	right:5%;
+}
+
+.config-nav{
+	display:table;
+}
+.config-nav-li{
+	display: table-cell;
+	padding: 0px 20px 0px 0px;
+}
+.human{
+	margin: 10px;
+	padding: 20px 0px 0px 45px;
+}
+.nav{
+	margin: 10px;
+	padding:20px;
+	display: table;
+}
+
+.nav-li{
+	margin:10px;
+	padding: 20px;
+	display: table-cell;
+}
