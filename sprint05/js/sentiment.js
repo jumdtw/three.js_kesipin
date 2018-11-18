@@ -17,8 +17,16 @@ function init() {
 
 function submitClickHandler(ev) {
 	let messageText = document.getElementById('messageText');
-	let postData = `apikey=${API_KEY}&query=${messageText.value}`;
-	callAPI(API_URL, postData).then(onSuccess).catch(onError);
+    const requestBody = {
+      "documents": [
+        {
+          "language": "en",
+          "id": "1",
+          "text": messageText,
+        }
+      ]
+    };
+	callAPI(API_URL, requestBody).then(onSuccess).catch(onError);
 	// 自分が打ったメッセージをチャット欄に表示する
 	addMessage_and_image(messageText.value, false);
 	ev.preventDefault();
@@ -46,20 +54,17 @@ function onError(error) {
 }
 
 // POSTメソッドで呼び出し、JSONで結果が返ってくる
-function callAPI(url, data) {
+function callAPI(API_URL, data) {
 	return new Promise((resolve, reject) => {
 		const req = new XMLHttpRequest();
 
-		req.open('POST', url);
+		req.open('POST', API_URL);
 		req.setRequestHeader('Content-Type', 'application/json');
+		request.setRequestHeader("Ocp-Apim-Subscription-Key", "79ec04c07c8f432d9071438b0ef970ae"); // Set API key.
 		req.onload = () => {
-			if (req.readyState === 4) {
-				if (req.status === 200) {
-					resolve(req.response);
-				} else {
-					reject(req.statusText);
-				}
-			}
+			const resultList = document.getElementById('output');
+			const li = document.createElement('li');
+			resultList.appendChild(li);
 		};
 
 		req.onerror = () => {
