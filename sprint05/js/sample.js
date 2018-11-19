@@ -20,6 +20,13 @@ let accessKey = '79ec04c07c8f432d9071438b0ef970ae';
 let uri = 'eastasia.api.cognitive.microsoft.com';
 let path = '/text/analytics/v2.0/sentiment';
 
+
+//init();
+
+//function init() {
+//	document.getElementById('sentimentButton').addEventListener('click', get_sentiments, false);
+//}
+
 let response_handler = function (response) {
     let body = '';
     response.on ('data', function (d) {
@@ -35,7 +42,7 @@ let response_handler = function (response) {
     });
 };
 
-let get_sentiments = function (documents) {
+function get_sentiments(documents){
     let body = JSON.stringify (documents);
 
     let request_params = {
@@ -47,7 +54,7 @@ let get_sentiments = function (documents) {
         }
     };
 
-    let req = https.request (request_params, response_handler);
+    let req = https.request(request_params, response_handler);
     req.write (body);
     req.end ();
 }

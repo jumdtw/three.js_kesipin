@@ -4,10 +4,13 @@
 // A3RT の Talk API
 // https://a3rt.recruit-tech.co.jp/product/
 
+
+
 const API_KEY = 'DZZtUcCw3uNYAlUUrdaF8Ylbod1BDTOc';
 const API_URL = 'https://api.a3rt.recruit-tech.co.jp/talk/v1/smalltalk';
 
 let output = document.getElementById('output');
+
 
 init();
 
@@ -26,7 +29,7 @@ function submitClickHandler(ev) {
 
 function addMessage(message, isAI) {
 	let p = document.createElement('p');
-	let input = document.createElement('input');
+	let button = document.createElement('button');
 	let ul = document.createElement('ul');
 	let li_ai = document.createElement('li');
 	let li_input = document.createElement('li');
@@ -36,11 +39,12 @@ function addMessage(message, isAI) {
 		ul.className = 'nav';
 		li_ai.className = 'nav-li';
 		li_input.className = 'nav-li';
-		input.id = 'sentimentButton';
-		input.type = 'submit';
-		input.value="感情診断";
+		button.id = 'sentimentButton';
+		button.type = 'submit';
+		button.onclick = loadScript('sample.js');
+		button.textContent = "感情診断";
 		li_ai.appendChild(p);
-		li_input.appendChild(input);
+		li_input.appendChild(button);
 		ul.appendChild(li_ai);
 		ul.appendChild(li_input);
 		output.appendChild(ul);
@@ -83,4 +87,11 @@ function callAPI(url, data) {
 
 		req.send(data);
 	});
+}
+
+function loadScript(url) {
+	var script = document.createElement('script');
+	script.type = 'text/javascript';
+	script.src = url;
+	return script
 }
