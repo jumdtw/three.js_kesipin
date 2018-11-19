@@ -30,24 +30,42 @@ function submitClickHandler(ev) {
 function addMessage(message, isAI) {
 	let p = document.createElement('p');
 	let button = document.createElement('button');
+	let input = document.createElement('input');
 	let ul = document.createElement('ul');
 	let li_ai = document.createElement('li');
 	let li_input = document.createElement('li');
+	let form = document.createElement('form');
+	form.method = 'POST';
+	form.action = '../cgi-bin/sentiment.py';
+	form.className = 'nav';
 	p.textContent = message;
 	if (isAI) {
-		p.className = 'ai';
-		ul.className = 'nav';
-		li_ai.className = 'nav-li';
-		li_input.className = 'nav-li';
-		button.id = 'sentimentButton';
-		button.type = 'submit';
-		button.onclick = loadScript('sample.js');
-		button.textContent = "感情診断";
-		li_ai.appendChild(p);
-		li_input.appendChild(button);
-		ul.appendChild(li_ai);
-		ul.appendChild(li_input);
-		output.appendChild(ul);
+		p.className = 'ai nav-li';
+		p.name = 'ai-comment';
+		//ul.className = 'nav';
+		//li_ai.className = 'nav-li';
+		//li_input.className = 'nav-li';
+
+		input.type="submit";
+		input.id ='sentimentButton';
+		input.className = 'nav-li'
+		input.value = '感情診断';
+		form.appendChild(p);
+		form.appendChild(input);
+
+		//button.id = 'sentimentButton';
+		//button.type = 'submit';
+		//button.onclick = loadScript('sample.js');
+		//button.textContent = "感情診断";
+
+
+		//li_ai.appendChild(p);
+		//li_input.appendChild(button);
+		//ul.appendChild(li_ai);
+		//ul.appendChild(li_input);
+		//i_ai.appendChild(form);
+		//ul.appendChild(form);
+		output.appendChild(form);
 	}else{	
 		p.className = 'human';
 		output.appendChild(p);
