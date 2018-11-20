@@ -29,6 +29,7 @@ function submitClickHandler(ev) {
 
 function addMessage(message, isAI) {
 	let p = document.createElement('p');
+	let p_ai = document.createElement('input')
 	let button = document.createElement('button');
 	let input = document.createElement('input');
 	let ul = document.createElement('ul');
@@ -36,12 +37,13 @@ function addMessage(message, isAI) {
 	let li_input = document.createElement('li');
 	let form = document.createElement('form');
 	form.method = 'POST';
-	form.action = '../cgi-bin/sentiment.py';
+	form.action = './cgi-bin/sentiment.py';
 	form.className = 'nav';
-	p.textContent = message;
+	p.value = message;
 	if (isAI) {
+		p_ai.value = message;
 		p.className = 'ai nav-li';
-		p.name = 'AI-text';
+		p_ai.name = 'AI-text';
 		//ul.className = 'nav';
 		//li_ai.className = 'nav-li';
 		//li_input.className = 'nav-li';
@@ -50,7 +52,7 @@ function addMessage(message, isAI) {
 		input.id ='sentimentButton';
 		input.className = 'nav-li'
 		input.value = '感情診断';
-		form.appendChild(p);
+		form.appendChild(p_ai);
 		form.appendChild(input);
 
 		//button.id = 'sentimentButton';
@@ -67,6 +69,7 @@ function addMessage(message, isAI) {
 		//ul.appendChild(form);
 		output.appendChild(form);
 	}else{	
+		p.textContent = message;
 		p.className = 'human';
 		output.appendChild(p);
 	}

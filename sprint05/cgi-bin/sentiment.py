@@ -49,8 +49,6 @@ headers   = {"Ocp-Apim-Subscription-Key": subscription_key,"Content-Type":"appli
 response  = requests.post(sentiment_api_url, headers=headers, json=documents)
 sentiments = response.json()
 
-print(sentiments)
-
 Score = sentiments.documents[0].score
 
 
@@ -62,7 +60,7 @@ if(Score>=0.7&&Socre<=1){
 
 img = img%(img_path)
 
-print("Content-type: text/html\n")
+print("Content-type: text/html\n\n")
 print(html_body % (img).encode('utf-8'))
 
 
