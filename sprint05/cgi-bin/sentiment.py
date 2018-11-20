@@ -49,9 +49,12 @@ headers   = {"Ocp-Apim-Subscription-Key": subscription_key,"Content-Type":"appli
 response  = requests.post(sentiment_api_url, headers=headers, json=documents)
 sentiments = response.json()
 
-Score = sentiments.documents[0].score
+#print(sentiments)
+Scor = sentiments["documents"]
+Score1 = Scor[0]
 
-"""
+Score = Score1['score'])
+
 if(Score>=0.7 and Socre<=1){
     img = '<img src="./image/happy.png" />'
     #img_path = './image/happy.png'
@@ -59,10 +62,10 @@ if(Score>=0.7 and Socre<=1){
     img = '<img src="./image/angry.png" />'
     #img_path = './image/angry.png'
 }
-"""
-#img = img%(img_path)
+
+
 
 print("Content-type: text/html\n\n")
-#print((html_body % (img)).encode('utf-8'))
-print((html_body).encode('utf-8'))
+print((html_body % (img)).encode('utf-8'))
+#print((html_body).encode('utf-8'))
 
