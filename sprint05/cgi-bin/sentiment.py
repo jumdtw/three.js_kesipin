@@ -55,7 +55,7 @@ Score1 = Scor[0]
 
 Score = Score1['score']
 
-if(Score>=0.7 or (Score<=1)):
+if(Score>=0.9 or (Score<=1)):
     img = '<img src="../image/happy.png" />'
     #img_path = './image/happy.png'
 elif((Score<=0.3) or (Score>=0)):
