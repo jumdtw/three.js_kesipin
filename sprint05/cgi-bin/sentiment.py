@@ -22,9 +22,7 @@ form = cgi.FieldStorage()
 
 img_path = '../image/normal.png'
 
-img = u"""
-<img src="%s" />
-"""
+img = '<img src="../image/normal.png" />'
 
 
 
@@ -55,13 +53,10 @@ Score1 = Scor[0]
 
 Score = Score1['score']
 
-if(Score>=0.9 or (Score<=1)):
+if(Score>=0.8 or (Score==1)):
     img = '<img src="../image/happy.png" />'
-    #img_path = './image/happy.png'
-elif((Score<=0.3) or (Score>=0)):
+elif((Score<=0.3) or (Score==0)):
     img = '<img src="../image/angry.png" />'
-    #img_path = './image/angry.png'
-
 
 
 
