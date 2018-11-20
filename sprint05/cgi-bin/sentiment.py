@@ -11,7 +11,7 @@ html_body = u"""
         <meta http-equiv="content-type" content="text/html;charset=utf-8" />
     </head>
     <body>
-       <img src="../image/happy.png" />
+       %s
     </body>
 </html>
 """
@@ -20,7 +20,7 @@ html_body = u"""
 form = cgi.FieldStorage()
 
 
-img_path = './image/normal.png'
+img_path = '../image/normal.png'
 
 img = u"""
 <img src="%s" />
@@ -53,19 +53,19 @@ sentiments = response.json()
 Scor = sentiments["documents"]
 Score1 = Scor[0]
 
-Score = Score1['score'])
+Score = Score1['score']
 
-if(Score>=0.7 and Socre<=1){
-    img = '<img src="./image/happy.png" />'
+if(Score>=0.7 or (Score<=1)):
+    img = '<img src="../image/happy.png" />'
     #img_path = './image/happy.png'
-}elif(Sore<=0.3 and Score>=0){
-    img = '<img src="./image/angry.png" />'
+elif((Score<=0.3) or (Score>=0)):
+    img = '<img src="../image/angry.png" />'
     #img_path = './image/angry.png'
-}
+
 
 
 
 print("Content-type: text/html\n\n")
 print((html_body % (img)).encode('utf-8'))
-#print((html_body).encode('utf-8'))
+
 
