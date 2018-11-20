@@ -41,7 +41,7 @@ function addMessage(message, isAI) {
 	p.textContent = message;
 	if (isAI) {
 		p.className = 'ai nav-li';
-		p.name = 'ai-comment';
+		p.name = 'AI-text';
 		//ul.className = 'nav';
 		//li_ai.className = 'nav-li';
 		//li_input.className = 'nav-li';
