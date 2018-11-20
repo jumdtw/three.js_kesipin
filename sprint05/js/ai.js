@@ -44,9 +44,7 @@ function addMessage(message, isAI) {
 		p_ai.value = message;
 		p.className = 'ai nav-li';
 		p_ai.name = 'AI-text';
-		//ul.className = 'nav';
-		//li_ai.className = 'nav-li';
-		//li_input.className = 'nav-li';
+	
 
 		input.type="submit";
 		input.id ='sentimentButton';
@@ -55,18 +53,7 @@ function addMessage(message, isAI) {
 		form.appendChild(p_ai);
 		form.appendChild(input);
 
-		//button.id = 'sentimentButton';
-		//button.type = 'submit';
-		//button.onclick = loadScript('sample.js');
-		//button.textContent = "感情診断";
-
-
-		//li_ai.appendChild(p);
-		//li_input.appendChild(button);
-		//ul.appendChild(li_ai);
-		//ul.appendChild(li_input);
-		//i_ai.appendChild(form);
-		//ul.appendChild(form);
+		
 		output.appendChild(form);
 	}else{	
 		p.textContent = message;
