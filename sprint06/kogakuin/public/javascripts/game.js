@@ -2,12 +2,16 @@ const socket = io();
 const canvas = $('#canvas-2d')[0];
 const context = canvas.getContext('2d');
 const playerImage = $('#player-image')[0];
-let movement = {};
+const radius = 40
 
 
 function gameStart(){
-    socket.emit('game-start');
+    socket.emit('game-start', {nickname: $("#nickname").val() });
+    $("#start-screen").hide();
 }
+$("#start-button").on('click', gameStart);
+
+let movement = {};
 
 $(document).on('keydown keyup', (event) => {
     const KeyToCommand = {
@@ -25,21 +29,76 @@ $(document).on('keydown keyup', (event) => {
         }
         socket.emit('movement', movement);
     }
+    if(event.key === ' ' && event.type === 'keydown'){
+        socket.emit('shoot');
+    }
 });
 
-socket.on('state', (player_list) => {
+socket.on('state', function(players, bullets, walls) {
+    //大事
     context.clearRect(0, 0, canvas.width, canvas.height);
 
+    //黒枠
     context.lineWidth = 10;
+    context.strokeStyle="black";  //線の色を青に指定
     context.beginPath();
     context.rect(0, 0, canvas.width, canvas.height);
     context.stroke();
 
-    Object.values(player_list).forEach((player) => {
-        context.drawImage(playerImage, player.x, player.y);
-        context.font = '30px Bold Arial';
-        context.fillText('Player', player.x, player.y - 20);
+
+    //プレイヤー描画
+    Object.values(players).forEach((player) => {
+        context.save();
+        /*
+        context.font = '20px Bold Arial';
+        context.fillText(player.nickname, player.x, player.y + player.height + 25);
+        context.font = '10px Bold Arial';
+        context.fillStyle = "gray";
+        context.fillText('♥'.repeat(player.maxHealth), player.x, player.y + player.height + 10);
+        context.fillStyle = "red";
+        context.fillText('♥'.repeat(player.health), player.x, player.y + player.height + 10);
+        
+        //context.translate(player.x + player.width/2, player.y + player.height/2);
+        //context.rotate(player.angle);
+        //context.drawImage(playerImage, 0, 0, playerImage.width, playerImage.height, -player.width/2, -player.height/2, player.width, player.height);
+        */
+        //色を指定
+        context.strokeStyle="blue";  //線の色を青に指定
+        context.fillStyle="blue";     //塗りつぶしの色を赤に指定
+        context.beginPath();
+        context.arc(player.x, player.y, radius, 0, 2 * Math.PI, false);
+        context.fill();
+        context.stroke();
+        context.restore();
+       
+        context.beginPath();
+        context.lineWidth = 3;
+        context.strokeStyle = '#ff0000';
+        context.moveTo(player.x, player.y);
+        //absはバグの温床なので良い子はやらないほうがいいらしい
+        context.lineTo(Math.abs(player.x + Math.cos(player.angle)*(radius+20)), Math.abs(player.y + Math.sin(player.angle) * (radius+20)));
+        context.stroke();
+        
+        if(player.socketId === socket.id){
+            context.save();
+            context.font = '30px Bold Arial';
+            context.fillText('You', player.x-20, player.y - radius-10);
+            //context.fillText(player.point + ' point', 20, 40);
+            context.restore();
+        }
+
+    });
+    Object.values(bullets).forEach((bullet) => {
+        context.beginPath();
+        context.arc(bullet.x, bullet.y, bullet.width/2, 0, 2 * Math.PI,false);
+        context.stroke();
+    });
+    Object.values(walls).forEach((wall) => {
+        context.fillStyle = 'black';
+        context.fillRect(wall.x, wall.y, wall.width, wall.height);
     });
 });
 
-socket.on('connect', gameStart);
+socket.on('dead', () => {
+    $("#start-screen").show();
+});

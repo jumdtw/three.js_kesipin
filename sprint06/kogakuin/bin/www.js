@@ -65,6 +65,8 @@ class GameObject{
 class Player extends GameObject{
   constructor(obj = {}){
     super(obj);
+    //なぜか継承できないのでidを再度定義
+    this.id = Math.floor(Math.random()*1000000000);
     this.socketId = obj.socketId;
     this.nickname = obj.nickname;
     this.health = this.maxHealth = 10
@@ -103,7 +105,7 @@ class Player extends GameObject{
     }
   }
   remove(){
-    delete players[this.id];
+    delete player_list[this.id];
     io.to(this.socketId).emit('dead');
   }
   toJSON(){
@@ -146,7 +148,7 @@ class BotPlayer extends Player{
       clearInterval(this.timer);
       setTimeout(() => {
           const bot = new BotPlayer({nickname: this.nickname});
-          players[bot.id] = bot;
+          player_list[bot.id] = bot;
       }, 3000);
   }
 };
@@ -174,16 +176,15 @@ player_list[bot.id] = bot;
 io.on('connection',onConnection);
 
 function onConnection(socket){
-  //initialize list
   console.log('succesfull')
   let player = null;
-
   socket.on('game-start',(config) =>{
     player = new Player({
       socketId: socket.id,
       nickname: config.nickname,
     });
     player_list[player.id] = player;
+    console.log(player_list);
   });
 
   socket.on('movement',function(movement){
@@ -206,24 +207,24 @@ function onConnection(socket){
 
 }
 
-setInterval(function() {
+setInterval(() => {
   Object.values(player_list).forEach((player)=>{
     const movement = player.movement;
     if(movement.forward){
       player.move(5);
-      console.log('UP');
+      
     }
     if(movement.back){
       player.move(-5);
-      console.log('DOWN');
+      
     }
     if(movement.left){
-      player.angle -= -0.1;
-      console.log('LEFT');
+      player.angle -= 0.1;
+     
     }
     if(movement.right){
       player.angle += 0.1;
-      console.log('RIGHT');
+      
     }
   });
 
@@ -247,7 +248,7 @@ setInterval(function() {
       }
     });
   });
-  io.sockets.emit('state',player_list);
+  io.sockets.emit('state',player_list, bullets, walls);
 },1000/30);
 
 
