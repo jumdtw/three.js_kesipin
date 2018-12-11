@@ -1,5 +1,6 @@
 //https://paiza.hatenablog.com/entry/paizacloud_online_multiplayer_game
-
+//http://marupeke296.com/
+//
 
 const express = require('express');
 const http = require('http');
@@ -79,6 +80,9 @@ class Player extends GameObject {
     this.v0 = 0;
     this.t = 0;
     this.a = -2.0;
+    this.old_dis = 0;
+    this.distance = 0;
+    this.spaceFlag = 0;
     do {
       this.x = Math.random() * (FWIDTH - this.width);
       this.y = Math.random() * (FHEIGHT - this.height);
@@ -89,6 +93,7 @@ class Player extends GameObject {
   addF() {
     this.v0 = 80.0;
     this.t = 0;
+    this.old_dis = 0;
     this.add_point_x = this.x;
     this.add_point_y = this.y;
     this.add_point_angle = this.angle;
@@ -109,44 +114,6 @@ class Player extends GameObject {
   }
 };
 
-/*
-class Bullet extends GameObject{
-  constructor(obj){
-    super(obj);
-    this.width = 15;
-    this.height = 15;
-    this.player = obj.player;
-  }
-  remove(){
-    delete this.player.bullets[this.id];
-    delete bullets[this.id];
-  }
-};
-*/
-
-/*
-class BotPlayer extends Player{
-  constructor(obj){
-      super(obj);
-      this.timer = setInterval(() => {
-          if(! this.move(4)){
-              this.angle = Math.random() * Math.PI * 2;
-          }
-          if(Math.random()<0.03){
-              this.shoot();
-          }
-      }, 1000/30);
-  }
-  remove(){
-      super.remove();
-      clearInterval(this.timer);
-      setTimeout(() => {
-          const bot = new BotPlayer({nickname: this.nickname});
-          player_list[bot.id] = bot;
-      }, 3000);
-  }
-};
-*/
 
 
 class Wall extends GameObject {
@@ -166,8 +133,6 @@ for (let i = 0; i < 3; i++) {
   walls[wall.id] = wall;
 }
 
-//const bot = new BotPlayer({nickname: 'bot'});
-//player_list[bot.id] = bot;
 
 io.on('connection', onConnection);
 
@@ -202,8 +167,7 @@ function onConnection(socket) {
 }
 
 setInterval(() => {
-  dt = 0.1
-  //a = -2.0
+  let dt = 0.1
   Object.values(player_list).forEach((player) => {
     const movement = player.movement;
     /*
@@ -224,23 +188,36 @@ setInterval(() => {
       player.angle += 0.1;
     }
 
+    /*
+    while(player.v > 0){
+      dt = dt + 0.1
+      //player.v = player.v0 + player.a * player.t;
+      player.stop_dis = player.v0 * dt + player.a * dt * dt;
+    }
+    */
+    
 
-    if (player.v0 != 0) {
-
+    
+    if (player.v0 != 0){ 
       if (player.t === 0) {
         player.v = player.v0 + player.a * (1000 / 30)
       }
-      if (player.v > 0) {
+      if(player.distance - player.old_dis >=0) {
         player.t = player.t + dt;
         player.v = player.v0 + player.a * player.t;
-        distance = player.v0 * player.t + player.a * player.t * player.t;
-        player.move(distance);
+        player.old_dis = player.distance;
+        player.distance = player.v0 * player.t + player.a * player.t * player.t;
+        player.move(player.distance);
       } else {
         player.v0 = 0;
-        player.a = 0;
         player.t = 0;
+        player.old_dis = 0;
+        player.distance = 0
       }
     }
+    
+
+    
 
   });
 

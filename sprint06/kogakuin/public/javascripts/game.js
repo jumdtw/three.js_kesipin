@@ -39,20 +39,20 @@ socket.on('state', function(players, color_list) {
     //大事
     context.clearRect(0, 0, canvas.width, canvas.height);
 
-    //黒枠
-    context.lineWidth = 10;
-    context.strokeStyle="black";  //線の色を青に指定
-    context.beginPath();
-    context.rect(0, 0, canvas.width, canvas.height);
+
 
     context.beginPath();
     let img = new Image();
     img.src = "../images/wood_texture.png"
     context.drawImage(img,0,0,1000,1000);
 
-
-
-
+    
+    //茶枠
+    context.lineWidth = 10;
+    context.strokeStyle="#914600";  
+    context.beginPath();
+    context.rect(0, 0, canvas.width, canvas.height);
+    
     context.stroke();
 
 
