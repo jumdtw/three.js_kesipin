@@ -44,6 +44,15 @@ socket.on('state', function(players, color_list) {
     context.strokeStyle="black";  //線の色を青に指定
     context.beginPath();
     context.rect(0, 0, canvas.width, canvas.height);
+
+    context.beginPath();
+    let img = new Image();
+    img.src = "../images/wood_texture.jpg"
+    context.drawImage(img,0,0,1000,1000);
+
+
+
+
     context.stroke();
 
 
