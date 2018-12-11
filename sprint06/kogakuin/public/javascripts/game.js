@@ -71,7 +71,7 @@ socket.on('state', function(players, color_list) {
         context.strokeStyle = '#ff0000';
         context.moveTo(player.x, player.y);
         //absはバグの温床なので良い子はやらないほうがいいらしい
-        context.lineTo(Math.abs(player.x + Math.cos(player.angle)*(radius+20)), Math.abs(player.y + Math.sin(player.angle) * (radius+20)));
+        context.lineTo(player.x + Math.cos(player.angle)*(radius+20), player.y + Math.sin(player.angle) * (radius+20));
         context.stroke();
         
         if(player.socketId === socket.id){

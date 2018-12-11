@@ -76,7 +76,8 @@ class Player extends GameObject{
     this.bullets = {};
     this.point = 0;
     this.movement = {};
-    this.v0 = 0
+    this.v0 = 0;
+    this.t = 0;
     do{
       this.x = Math.random() * (FWIDTH - this.width);
       this.y = Math.random() * (FHEIGHT - this.height);
@@ -85,7 +86,11 @@ class Player extends GameObject{
   }
 
   addF(){
-    v0 = 300.0;
+    this.v0 = 300.0;
+    this.t = 0;
+    this.add_point_x = this.x;
+    this.add_point_y = this.y;
+    this.add_point_angle = this.angle;
   }
  
   remove(){
@@ -98,8 +103,8 @@ class Player extends GameObject{
   }
 
   move(distance){
-    this.x += distance * Math.cos(this.angle);
-    this.y += distance * Math.sin(this.angle);
+    this.x = this.add_point_x + distance * Math.cos(this.add_point_angle);
+    this.y = this.add_point_y + distance * Math.sin(this.add_point_angle);
   }
 };
 
@@ -184,7 +189,8 @@ function onConnection(socket){
 
   socket.on('shoot',function(){
     if(!player || player.health===0){return;}
-    //player.addF();
+    console.log('aaa'); 
+    player.addF();
   });
 
   socket.on('disconnect',()=>{
@@ -196,8 +202,11 @@ function onConnection(socket){
 }
 
 setInterval(() => {
+  dt = 0.1
+  a = -1.0
   Object.values(player_list).forEach((player)=>{
     const movement = player.movement;
+    /*
     if(movement.forward){
       player.move(5);
       
@@ -206,6 +215,7 @@ setInterval(() => {
       player.move(-5);
       
     }
+    */
     if(movement.left){
       player.angle -= 0.1;
      
@@ -213,6 +223,21 @@ setInterval(() => {
     if(movement.right){
       player.angle += 0.1;
     }
+    
+    if(player.v0 != 0){
+      if(player.t === 0){
+        player.v = player.v0 + a * player.t
+      }
+      if(player.v>=0){
+        player.t = player.t + dt;
+        player.v = player.v0 + a * player.t;
+        distance = player.v0 * player.t + a * player.t * player.t;
+        player.move(5);
+      }else{
+        player.v0 = 0;
+      }
+    }
+
   });
 
   /* 
