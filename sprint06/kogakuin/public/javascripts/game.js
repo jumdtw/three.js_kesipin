@@ -47,7 +47,7 @@ socket.on('state', function(players, color_list) {
 
     context.beginPath();
     let img = new Image();
-    img.src = "../images/wood_texture.jpg"
+    img.src = "../images/wood_texture.png"
     context.drawImage(img,0,0,1000,1000);
 
 
