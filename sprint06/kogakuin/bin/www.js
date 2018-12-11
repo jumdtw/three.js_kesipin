@@ -86,7 +86,7 @@ class Player extends GameObject{
   }
 
   addF(){
-    this.v0 = 300.0;
+    this.v0 = 200.0;
     this.t = 0;
     this.add_point_x = this.x;
     this.add_point_y = this.y;
@@ -203,7 +203,7 @@ function onConnection(socket){
 
 setInterval(() => {
   dt = 0.1
-  a = -1.0
+  a = -0.3
   Object.values(player_list).forEach((player)=>{
     const movement = player.movement;
     /*
@@ -232,7 +232,7 @@ setInterval(() => {
         player.t = player.t + dt;
         player.v = player.v0 + a * player.t;
         distance = player.v0 * player.t + a * player.t * player.t;
-        player.move(5);
+        player.move(distance);
       }else{
         player.v0 = 0;
       }
