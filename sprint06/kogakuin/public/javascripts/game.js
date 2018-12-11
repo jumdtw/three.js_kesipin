@@ -5,6 +5,7 @@ const playerImage = $('#player-image')[0];
 const radius = 40
 
 
+
 function gameStart(){
     socket.emit('game-start', {nickname: $("#nickname").val() });
     $("#start-screen").hide();
@@ -34,7 +35,7 @@ $(document).on('keydown keyup', (event) => {
     }
 });
 
-socket.on('state', function(players, bullets, walls) {
+socket.on('state', function(players, color_list) {
     //大事
     context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -48,29 +49,23 @@ socket.on('state', function(players, bullets, walls) {
 
     //プレイヤー描画
     Object.values(players).forEach((player) => {
+
         context.save();
-        /*
         context.font = '20px Bold Arial';
         context.fillText(player.nickname, player.x, player.y + player.height + 25);
-        context.font = '10px Bold Arial';
-        context.fillStyle = "gray";
-        context.fillText('♥'.repeat(player.maxHealth), player.x, player.y + player.height + 10);
-        context.fillStyle = "red";
-        context.fillText('♥'.repeat(player.health), player.x, player.y + player.height + 10);
-        
-        //context.translate(player.x + player.width/2, player.y + player.height/2);
-        //context.rotate(player.angle);
-        //context.drawImage(playerImage, 0, 0, playerImage.width, playerImage.height, -player.width/2, -player.height/2, player.width, player.height);
-        */
+
         //色を指定
-        context.strokeStyle="blue";  //線の色を青に指定
-        context.fillStyle="blue";     //塗りつぶしの色を赤に指定
+        context.strokeStyle= color_list[player.id]; 
+        context.fillStyle= color_list[player.id];
+        //player描画    
         context.beginPath();
         context.arc(player.x, player.y, radius, 0, 2 * Math.PI, false);
         context.fill();
         context.stroke();
         context.restore();
        
+
+        //向いている方向にlineを描画
         context.beginPath();
         context.lineWidth = 3;
         context.strokeStyle = '#ff0000';
@@ -83,20 +78,11 @@ socket.on('state', function(players, bullets, walls) {
             context.save();
             context.font = '30px Bold Arial';
             context.fillText('You', player.x-20, player.y - radius-10);
-            //context.fillText(player.point + ' point', 20, 40);
             context.restore();
         }
 
     });
-    Object.values(bullets).forEach((bullet) => {
-        context.beginPath();
-        context.arc(bullet.x, bullet.y, bullet.width/2, 0, 2 * Math.PI,false);
-        context.stroke();
-    });
-    Object.values(walls).forEach((wall) => {
-        context.fillStyle = 'black';
-        context.fillRect(wall.x, wall.y, wall.width, wall.height);
-    });
+    
 });
 
 socket.on('dead', () => {
