@@ -88,11 +88,13 @@ class Player extends GameObject {
     this.movement = {};
     //自分で押した時
     this.v0 = 0;
+    this.v = 0;
     this.t = 0;
     this.a = 12.0;
     this.old_dis = 0;
     this.distance = 0;
     this.spaceFlag = 0;
+    this.m = 1;
 
     //自身が進む最終的な方法
     this.move_angle = 0;
@@ -216,21 +218,16 @@ function CreateColor() {
 }
 
 function shoot_move(player){
-  if(player.t === 0) {
-    player.v = player.v0 + player.a * (1000 / 30)
-  }
+  player.t += dt;
+  player.v = player.v0 - player.a * player.t;
   //if(player.distance - player.old_dis >=0)
-  if(energy_diff(player) >= 0){
-    player.t += dt;
-    console.log(player.v + '=' + player.v0 + '+' + player.a + '*' + player.t);
-    player.old_dis = player.distance;
-    player.distance = player.v0 * player.t - player.a * player.t * player.t;
+  if(player.v >= 0){
+    player.distance = player.v0 * player.t - (player.a * player.t * player.t)/2;
     player.move(player.distance,0);
   } else {
     player.v = 0;
     player.v0 = 0;
     player.t = 0;
-    player.old_dis = 0;
     player.distance = 0
   }
 }
@@ -250,7 +247,6 @@ function hit_judge(player){
 }
 
 function energy_diff(player){
-  diif = ((1*player.v0*player.v0)/2) - (1*g*m)
 }
 
 function change_move_info(player,adderFplayer){
