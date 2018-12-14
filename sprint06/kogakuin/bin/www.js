@@ -14,6 +14,15 @@ const FWIDTH = 1000;
 const FHEIGHT = 1000;
 const PORT = 3000
 
+const radius = 40;
+
+//時間差分
+const dt = 0.1;
+//重力
+const g = 0.98;
+//動摩擦係数
+const u = 0.8
+
 class GameObject {
   contructor(obj = {}) {
     this.id = Math.floor(Math.random() * 1000000000);
@@ -77,12 +86,17 @@ class Player extends GameObject {
     this.bullets = {};
     this.point = 0;
     this.movement = {};
+    //自分で押した時
     this.v0 = 0;
     this.t = 0;
-    this.a = -2.0;
+    this.a = 12.0;
     this.old_dis = 0;
     this.distance = 0;
     this.spaceFlag = 0;
+
+    //自身が進む最終的な方法
+    this.move_angle = 0;
+
     do {
       this.x = Math.random() * (FWIDTH - this.width);
       this.y = Math.random() * (FHEIGHT - this.height);
@@ -91,12 +105,12 @@ class Player extends GameObject {
   }
 
   addF() {
-    this.v0 = 80.0;
+    this.v0 = 150.0;
     this.t = 0;
     this.old_dis = 0;
     this.add_point_x = this.x;
     this.add_point_y = this.y;
-    this.add_point_angle = this.angle;
+    this.move_angle = this.angle;
   }
 
   remove() {
@@ -109,8 +123,8 @@ class Player extends GameObject {
   }
 
   move(distance) {
-    this.x = this.add_point_x + distance * Math.cos(this.add_point_angle);
-    this.y = this.add_point_y + distance * Math.sin(this.add_point_angle);
+      this.x = this.add_point_x + distance * Math.cos(this.move_angle);
+      this.y = this.add_point_y + distance * Math.sin(this.move_angle);
   }
 };
 
@@ -167,19 +181,9 @@ function onConnection(socket) {
 }
 
 setInterval(() => {
-  let dt = 0.1
+  
   Object.values(player_list).forEach((player) => {
     const movement = player.movement;
-    /*
-    if(movement.forward){
-      player.move(5);
-      
-    }
-    if(movement.back){
-      player.move(-5);
-      
-    }
-    */
 
     if (movement.left) {
       player.angle -= 0.1;
@@ -188,40 +192,16 @@ setInterval(() => {
       player.angle += 0.1;
     }
 
-    /*
-    while(player.v > 0){
-      dt = dt + 0.1
-      //player.v = player.v0 + player.a * player.t;
-      player.stop_dis = player.v0 * dt + player.a * dt * dt;
+    //移動処理
+    if(player.v0!=0){
+      shoot_move(player);
     }
-    */
-    
+    //場外判定
 
-    
-    if (player.v0 != 0){ 
-      if (player.t === 0) {
-        player.v = player.v0 + player.a * (1000 / 30)
-      }
-      if(player.distance - player.old_dis >=0) {
-        player.t = player.t + dt;
-        player.v = player.v0 + player.a * player.t;
-        player.old_dis = player.distance;
-        player.distance = player.v0 * player.t + player.a * player.t * player.t;
-        player.move(player.distance);
-      } else {
-        player.v0 = 0;
-        player.t = 0;
-        player.old_dis = 0;
-        player.distance = 0
-      }
-    }
-    
-
-    
-
-  });
-
+    //あたり判定
+    hit_judge(player);
   
+  });
 
   io.sockets.emit('state', player_list, color_list);
 
@@ -233,6 +213,61 @@ function CreateColor() {
   let g = ('0' + Math.floor(Math.random() * 255).toString(16)).slice(-2);
   let b = ('0' + Math.floor(Math.random() * 255).toString(16)).slice(-2);
   return '#' + r + g + b;
+}
+
+function shoot_move(player){
+  if(player.t === 0) {
+    player.v = player.v0 + player.a * (1000 / 30)
+  }
+  //if(player.distance - player.old_dis >=0)
+  if(energy_diff(player) >= 0){
+    player.t += dt;
+    console.log(player.v + '=' + player.v0 + '+' + player.a + '*' + player.t);
+    player.old_dis = player.distance;
+    player.distance = player.v0 * player.t - player.a * player.t * player.t;
+    player.move(player.distance,0);
+  } else {
+    player.v = 0;
+    player.v0 = 0;
+    player.t = 0;
+    player.old_dis = 0;
+    player.distance = 0
+  }
+}
+
+function hit_judge(player){
+  flag = 0;
+  Object.values(player_list).forEach((subplayer) => {
+    if(player.id===subplayer.id){flag=1;return;}
+    if(flag){
+      R = radius + radius;
+      r1 = Math.sqrt(Math.pow((player.x-subplayer.x),2)+Math.pow(player.y-subplayer.y,2));
+      if(R>=r1){
+        change_move_info(subplayer,player);
+      }
+    }
+  });
+}
+
+function energy_diff(player){
+  diif = ((1*player.v0*player.v0)/2) - (1*g*m)
+}
+
+function change_move_info(player,adderFplayer){
+  player.add_point_x = player.x;
+  player.add_point_y = player.y;
+  adderFplayer.add_point_x = adderFplayer.x
+  adderFplayer.add_point_y = adderFplayer.y
+  //当たった方向との差分の角度
+  diffangle = Math.atan2(player.y-adderFplayer.y,player.x-adderFplayer.y)
+  //当たった方向の反対ベクトル
+  hit_point_return = adderFplayer.move_angle+(diffangle) - Math.PI;
+  //change player.v0 and adderFplayer
+  player.v0 = 100;//adderFplayer.move_angle * Math.cos(diffangle);
+  adderFplayer.v0 = 100;
+  //change player.move_angle and adderFplayer.move_angle
+  player.move_angle = adderFplayer.move_angle+(diffangle);
+  adderFplayer.move_angle = hit_point_return;//hit_point_return + ((adderFplayer.move_angle - (hit_point_return))/2);
 }
 
 
