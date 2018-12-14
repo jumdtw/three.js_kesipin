@@ -96,6 +96,8 @@ socket.on('state', function(players, color_list) {
     
 });
 
-socket.on('dead', () => {
-    $("#start-screen").show();
+socket.on('dead', function(socketId) {
+    if(socket.id === socketId){
+        $("#end-screen").show();
+    }  
 });
