@@ -91,7 +91,7 @@ class Player extends GameObject {
     this.v = 0;
     this.a = 12.0;
     this.distance = 0;
-    this.spaceFlag = 0;
+    this.moveFlag = 0;
     this.m = 1;
     //自身が進む最終的な方向
     this.move_angle = 0;
@@ -104,7 +104,7 @@ class Player extends GameObject {
   }
 
   addF() {
-    this.v0 = 150.0;
+    this.v0 = 100.0;
     this.move_angle = this.angle;
   }
 
@@ -163,7 +163,10 @@ function onConnection(socket) {
 
   socket.on('shoot', function () {
     if (!player || player.health === 0) { return; }
-    player.addF();
+    if(player.moveFlag==false){
+      player.moveFlag = true;
+      player.addF();
+    }
   });
 
   socket.on('disconnect', () => {
@@ -174,27 +177,29 @@ function onConnection(socket) {
 
 }
 
-setInterval(() => {
+setInterval(() => {//-----------------------------------------------------------------------------------------------------------------------------------
   Object.values(player_list).forEach((player) => {
     const movement = player.movement;
 
-    if (movement.left) {
+    if (movement.left && player.moveFlag===false) {
       player.angle -= 0.1;
     }
-    if (movement.right) {
+    if (movement.right && player.moveFlag===false) {
       player.angle += 0.1;
     }
 
     //移動処理
     if(player.v0!=0){
       shoot_move(player);
+    }else{
+      player.moveFlag = false;
     }
     //場外判定
     out_judge(player);
     //あたり判定
     hit_judge(player);
   
-  });
+  });//--------------------------------------------------------------------------------------------------------------------------------------------------------
 
   io.sockets.emit('state', player_list, color_list);
 
@@ -222,9 +227,16 @@ function shoot_move(player){
 }
 
 function hit_judge(adderplayer){
-  flag = 1;
+  flag = false;
   Object.values(player_list).forEach((subplayer) => {
-    if(adderplayer.id===subplayer.id){return;}
+    if(flag === false){
+      if(adderplayer.id===subplayer.id){
+        flag=true;
+        return;
+      }else{
+        return;
+      }
+    }
     if(flag){
       R = radius + radius;
       r1 = Math.pow((adderplayer.x-subplayer.x),2)+Math.pow(adderplayer.y-subplayer.y,2);
@@ -237,48 +249,50 @@ function hit_judge(adderplayer){
 
 
 function change_move_info(player,adderFplayer){
-  //当てた方の消しゴムの向いている方向ベクトル上のx,yを計算する。
+  //当てた方の消しゴムの向いている方向ベクトル円上のx,yを計算する。
   player_circle_on_x = adderFplayer.x + radius * Math.cos(adderFplayer.move_angle); 
   player_circle_on_y = adderFplayer.y + radius * Math.sin(adderFplayer.move_angle); 
   //当たった方向との差分の角度
   //diffangle = Math.atan2(player.y-player_circle_on_y,player.x-player_circle_on_x);
-  diffangle = Math.atan2(adderFplayer.y - player.y,adderFplayer.x - player.x);
+  diffangle = Math.atan2(player_circle_on_y - player.y,player_circle_on_x - player.x);
   //当たった方向の反対ベクトル
   hit_point_return = adderFplayer.move_angle+(diffangle) + Math.PI;
-  //change player.v0 and adderFplayer
+  //change player.v0 and adderFplayer--------------------------------------------------------------------
   energy = (adderFplayer.v * adderFplayer.v *adderFplayer.m)/2
   afterV = (Math.sqrt(energy))/2
   //console.log(afterV);
   player.v0 = 50;//afterV;
   adderFplayer.v0 = 50;//afterV;
-  //random rad
+  //random rad-------------------------------------------------------------------------------------------
   randrad = Math.floor(Math.random()*((Math.PI/2)-Math.PI/6)+Math.PI/6);
+  counter = 0;
+  adderflag = false;
+  playerflag = false;
+  while(after_move_check(player,adderFplayer,diffangle)===true){
+    counter += 0.1;
+    if(counter <= Math.PI || adderflag === true){
+      adderflag = true;
+      adderFplayer.move_angle += 0.1;
+    }else if(counter <= Math.PI || playerflag === true){
+      playerflag = true;
+      player.move_angle += 0.1;
+    }else{
+      adderFplayer.move_angle += 0.01;
+      player.move_angle -= 0.01;
+    }
+  }
   //change player.move_angle and adderFplayer.move_angle
   player.move_angle = adderFplayer.move_angle+diffangle;
-  adderFplayer.move_angle = hit_point_return + ((adderFplayer.move_angle - (hit_point_return))/2);
-  counter = 0;
-  while(after_move_check(player,adderFplayer)===true){
-    if(counter >= 10){
-      break;
-    }
-    /*
-    adderFplayer.x = adderFplayer.x + 1*Math.cos(adderFplayer.move_angle - Math.PI);
-    adderFplayer.y = adderFplayer.y + 1*Math.sin(adderFplayer.move_angle - Math.PI);
-    player.x = player.x + 1*Math.cos(player.move_angle - Math.PI);
-    player.y = player.y + 1*Math.sin(player.move_angle - Math.PI);
-    */
-    adderFplayer.move_angle += 1;
-    counter += 1;
-  }
+  adderFplayer.move_angle = adderFplayer.move_angle - diffangle;//hit_point_return + ((adderFplayer.move_angle - (hit_point_return))/2);//
 }
 
 function after_move_check(player,adderFplayer){
   Flag = false;
   //それぞれの移動後のx,y座標を計算し、重なっていないか確認する。
-  adderFplayer_x_after = adderFplayer.x + adderFplayer.distance * Math.cos(adderFplayer.move_angle);
-  adderFplayer_y_after = adderFplayer.y + adderFplayer.distance * Math.sin(adderFplayer.move_angle);
-  player_x_after = player.x + player.distance * Math.cos(player.move_angle);
-  player_y_after = player.y + player.distance * Math.sin(player.move_angle);
+  adderFplayer_x_after = adderFplayer.x + adderFplayer.distance * Math.cos(adderFplayer.move_angle - diffangle);
+  adderFplayer_y_after = adderFplayer.y + adderFplayer.distance * Math.sin(adderFplayer.move_angle - diffangle);
+  player_x_after = player.x + player.distance * Math.cos(adderFplayer.move_angle+diffangle);
+  player_y_after = player.y + player.distance * Math.sin(adderFplayer.move_angle+diffangle);
   R = 2 * radius;
   //2点間の差
   diff_x = adderFplayer_x_after - player_x_after;
