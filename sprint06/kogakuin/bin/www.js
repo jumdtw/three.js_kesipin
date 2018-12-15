@@ -187,7 +187,6 @@ setInterval(() => {//-----------------------------------------------------------
     if (movement.right && player.moveFlag===false) {
       player.angle += 0.1;
     }
-
     //移動処理
     if(player.v0!=0){
       shoot_move(player);
@@ -265,34 +264,43 @@ function change_move_info(player,adderFplayer){
   adderFplayer.v0 = 50;//afterV;
   //random rad-------------------------------------------------------------------------------------------
   randrad = Math.floor(Math.random()*((Math.PI/2)-Math.PI/6)+Math.PI/6);
+  /*
   counter = 0;
   adderflag = false;
   playerflag = false;
-  while(after_move_check(player,adderFplayer,diffangle)===true){
-    counter += 0.1;
+  player_angle_diff = 0;
+  adderFplayer_angle_diff = 0;
+  while(after_move_check(player,adderFplayer,diffangle,adderFplayer_angle_diff,player_angle_diff)===true){
+    //counter += 0.1;
+    adderFplayer_angle_diff -= 0.01;
+    player_angle_diff += 0.01;
+    console.log('a');
+    
     if(counter <= Math.PI || adderflag === true){
-      adderflag = true;
-      adderFplayer.move_angle += 0.1;
+      adderFplayer_angle_diff += 0.1;
     }else if(counter <= Math.PI || playerflag === true){
+      adderFplayer_angle_diff = 0;
       playerflag = true;
-      player.move_angle += 0.1;
+      player_angle_diff += 0.1;
     }else{
-      adderFplayer.move_angle += 0.01;
-      player.move_angle -= 0.01;
+      if(c)
+      adderFplayer.move_angle -= 0.01;
+      player.move_angle += 0.01;
     }
   }
+  */
   //change player.move_angle and adderFplayer.move_angle
   player.move_angle = adderFplayer.move_angle+diffangle;
-  adderFplayer.move_angle = adderFplayer.move_angle - diffangle;//hit_point_return + ((adderFplayer.move_angle - (hit_point_return))/2);//
+  adderFplayer.move_angle = ((adderFplayer.move_angle - (hit_point_return))/2);//adderFplayer.move_angle - diffangle;
 }
 
-function after_move_check(player,adderFplayer){
+function after_move_check(player,adderFplayer,diffangle,adderFplayer_angle_diff,player_angle_diff){
   Flag = false;
   //それぞれの移動後のx,y座標を計算し、重なっていないか確認する。
-  adderFplayer_x_after = adderFplayer.x + adderFplayer.distance * Math.cos(adderFplayer.move_angle - diffangle);
-  adderFplayer_y_after = adderFplayer.y + adderFplayer.distance * Math.sin(adderFplayer.move_angle - diffangle);
-  player_x_after = player.x + player.distance * Math.cos(adderFplayer.move_angle+diffangle);
-  player_y_after = player.y + player.distance * Math.sin(adderFplayer.move_angle+diffangle);
+  adderFplayer_x_after = adderFplayer.x + adderFplayer.distance * Math.cos(adderFplayer.move_angle - diffangle - adderFplayer_angle_diff);
+  adderFplayer_y_after = adderFplayer.y + adderFplayer.distance * Math.sin(adderFplayer.move_angle - diffangle - adderFplayer_angle_diff);
+  player_x_after = player.x + player.distance * Math.cos(adderFplayer.move_angle+diffangle+player_angle_diff);
+  player_y_after = player.y + player.distance * Math.sin(adderFplayer.move_angle+diffangle+player_angle_diff);
   R = 2 * radius;
   //2点間の差
   diff_x = adderFplayer_x_after - player_x_after;
@@ -315,7 +323,7 @@ function out_judge(player){
 app.use(express.static('public'));
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '/public/index.html'));
+  res.sendFile('kogkauin/public/index.html');
 });
 
 server.listen(PORT, function () {
