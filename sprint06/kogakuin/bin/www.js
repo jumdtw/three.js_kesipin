@@ -1,6 +1,6 @@
 //https://paiza.hatenablog.com/entry/paizacloud_online_multiplayer_game
 //http://marupeke296.com/
-//
+//https://hakuhin.jp/as/collide.html
 
 const express = require('express');
 const http = require('http');
@@ -86,15 +86,15 @@ class Player extends GameObject {
     this.bullets = {};
     this.point = 0;
     this.movement = {};
-    //自分で押した時
-    this.v0 = 0;
-    this.v = 0;
+    //速度ベクトル
+    this.vx = 0;
+    this.vy = 0;
+    // 加速度
     this.a = 12.0;
-    this.distance = 0;
-    this.moveFlag = 0;
+    //消しゴムとしての尊厳を守るためのFlag
+    this.moveFlag = false;
+    //質量
     this.m = 1;
-    //自身が進む最終的な方向
-    this.move_angle = 0;
 
     do {
       this.x = Math.random() * (FWIDTH - this.width);
@@ -105,7 +105,6 @@ class Player extends GameObject {
 
   addF() {
     this.v0 = 100.0;
-    this.move_angle = this.angle;
   }
 
   remove() {
@@ -117,8 +116,8 @@ class Player extends GameObject {
   }
 
   move() {
-      this.x = this.x + this.distance * Math.cos(this.move_angle);
-      this.y = this.y + this.distance * Math.sin(this.move_angle);
+      this.x = this.x + this.vx;
+      this.y = this.y + this.vy;
   }
 };
 
@@ -180,7 +179,6 @@ function onConnection(socket) {
 setInterval(() => {//-----------------------------------------------------------------------------------------------------------------------------------
   Object.values(player_list).forEach((player) => {
     const movement = player.movement;
-
     if (movement.left && player.moveFlag===false) {
       player.angle -= 0.1;
     }
@@ -188,11 +186,15 @@ setInterval(() => {//-----------------------------------------------------------
       player.angle += 0.1;
     }
     //移動処理
-    if(player.v0!=0){
-      shoot_move(player);
+    if(player.vx > 0 || player.vy >0 || player.v0 > 0){
+      v_diff(player);
     }else{
+      player.v0 = 0;
+      player.vx = 0;
+      player.vy = 0;
       player.moveFlag = false;
     }
+    player.move();
     //場外判定
     out_judge(player);
     //あたり判定
@@ -212,17 +214,12 @@ function CreateColor() {
   return '#' + r + g + b;
 }
 
-function shoot_move(player){
-  player.v = player.v0 - player.a * dt;
-  if(player.v >= 0){
-    player.distance = player.v0 * dt - (player.a * dt*dt)/2;
-    player.v0 = player.v
-    player.move();
-  } else {
-    player.v = 0;
-    player.v0 = 0;
-    player.distance = 0
-  }
+//速度計算と移動位置計算
+function v_diff(player){
+  player.v0 = player.v0 - player.a *dt;
+  distance = player.v0 * dt - (player.a * dt * dt)/2;
+  player.vx = distance * Math.cos(player.angle);
+  player.vy = distance * Math.sin(player.angle);
 }
 
 function hit_judge(adderplayer){
@@ -239,7 +236,7 @@ function hit_judge(adderplayer){
     if(flag){
       R = radius + radius;
       r1 = Math.pow((adderplayer.x-subplayer.x),2)+Math.pow(adderplayer.y-subplayer.y,2);
-      if((R*R)>=r1){
+      if((R*R) > r1){
         change_move_info(subplayer,adderplayer);
       }
     }
@@ -248,69 +245,18 @@ function hit_judge(adderplayer){
 
 
 function change_move_info(player,adderFplayer){
-  //当てた方の消しゴムの向いている方向ベクトル円上のx,yを計算する。
-  player_circle_on_x = adderFplayer.x + radius * Math.cos(adderFplayer.move_angle); 
-  player_circle_on_y = adderFplayer.y + radius * Math.sin(adderFplayer.move_angle); 
-  //当たった方向との差分の角度
-  //diffangle = Math.atan2(player.y-player_circle_on_y,player.x-player_circle_on_x);
-  diffangle = Math.atan2(player_circle_on_y - player.y,player_circle_on_x - player.x);
-  //当たった方向の反対ベクトル
-  hit_point_return = adderFplayer.move_angle+(diffangle) + Math.PI;
-  //change player.v0 and adderFplayer--------------------------------------------------------------------
-  energy = (adderFplayer.v * adderFplayer.v *adderFplayer.m)/2
-  afterV = (Math.sqrt(energy))/2
-  //console.log(afterV);
-  player.v0 = 50;//afterV;
-  adderFplayer.v0 = 50;//afterV;
-  //random rad-------------------------------------------------------------------------------------------
-  randrad = Math.floor(Math.random()*((Math.PI/2)-Math.PI/6)+Math.PI/6);
-  /*
-  counter = 0;
-  adderflag = false;
-  playerflag = false;
-  player_angle_diff = 0;
-  adderFplayer_angle_diff = 0;
-  while(after_move_check(player,adderFplayer,diffangle,adderFplayer_angle_diff,player_angle_diff)===true){
-    //counter += 0.1;
-    adderFplayer_angle_diff -= 0.01;
-    player_angle_diff += 0.01;
-    console.log('a');
-    
-    if(counter <= Math.PI || adderflag === true){
-      adderFplayer_angle_diff += 0.1;
-    }else if(counter <= Math.PI || playerflag === true){
-      adderFplayer_angle_diff = 0;
-      playerflag = true;
-      player_angle_diff += 0.1;
-    }else{
-      if(c)
-      adderFplayer.move_angle -= 0.01;
-      player.move_angle += 0.01;
-    }
-  }
-  */
-  //change player.move_angle and adderFplayer.move_angle
-  player.move_angle = adderFplayer.move_angle+diffangle;
-  adderFplayer.move_angle = ((adderFplayer.move_angle - (hit_point_return))/2);//adderFplayer.move_angle - diffangle;
+  vx = (player.x - adderFplayer.x);
+  vy = (player.y - adderFplayer.y);
+  len = Math.sqrt(vx*vx + vy*vy);
+  distance = 2 * R - len;
+  if(len>0) len =  1/len;
+  distance = distance/2;
+  player.vx = vx * distance;
+  adderFplayer.vx = vx * distance;
+  player.vy = vy * distance;
+  adderFplayer.vy = vy * distance;
 }
 
-function after_move_check(player,adderFplayer,diffangle,adderFplayer_angle_diff,player_angle_diff){
-  Flag = false;
-  //それぞれの移動後のx,y座標を計算し、重なっていないか確認する。
-  adderFplayer_x_after = adderFplayer.x + adderFplayer.distance * Math.cos(adderFplayer.move_angle - diffangle - adderFplayer_angle_diff);
-  adderFplayer_y_after = adderFplayer.y + adderFplayer.distance * Math.sin(adderFplayer.move_angle - diffangle - adderFplayer_angle_diff);
-  player_x_after = player.x + player.distance * Math.cos(adderFplayer.move_angle+diffangle+player_angle_diff);
-  player_y_after = player.y + player.distance * Math.sin(adderFplayer.move_angle+diffangle+player_angle_diff);
-  R = 2 * radius;
-  //2点間の差
-  diff_x = adderFplayer_x_after - player_x_after;
-  diff_y = adderFplayer_y_after - player_y_after;
-  diff_point = Math.pow(diff_x,2)+Math.pow(diff_y,2);
-  if((R*R) >= diff_point){
-    Flag = true;
-  }
-  return Flag;
-}
 
 function out_judge(player){
   if(player.x <0 || player.x >1000 || player.y < 0 || player.y >1000){
