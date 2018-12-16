@@ -319,11 +319,10 @@ function out_judge(player){
   }
 }
 
-
 app.use(express.static('public'));
 
 app.get('/', (req, res) => {
-  res.sendFile('kogkauin/public/index.html');
+  res.sendFile('kogkauin/public/aaa.html');
 });
 
 server.listen(PORT, function () {
