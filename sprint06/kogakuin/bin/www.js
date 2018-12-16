@@ -89,12 +89,16 @@ class Player extends GameObject {
     //速度ベクトル
     this.vx = 0;
     this.vy = 0;
+    this.px = 0;
+    this.py = 0;
     // 加速度
     this.a = 12.0;
     //消しゴムとしての尊厳を守るためのFlag
     this.moveFlag = false;
     //質量
     this.m = 1;
+    //進む向き
+    this.move_angle;
 
     do {
       this.x = Math.random() * (FWIDTH - this.width);
@@ -104,7 +108,10 @@ class Player extends GameObject {
   }
 
   addF() {
+    this.move_angle = this.angle;
     this.v0 = 100.0;
+    this.vx = 100 * Math.cos(this.move_angle);
+    this.vy = 100 * Math.sin(this.move_angle);
   }
 
   remove() {
@@ -116,8 +123,8 @@ class Player extends GameObject {
   }
 
   move() {
-      this.x = this.x + this.vx;
-      this.y = this.y + this.vy;
+    this.x = this.x + this.vx;
+    this.y = this.y + this.vy;
   }
 };
 
@@ -185,8 +192,14 @@ setInterval(() => {//-----------------------------------------------------------
     if (movement.right && player.moveFlag===false) {
       player.angle += 0.1;
     }
+
+    if(player.v0 < 0 ){
+      player.vx = 0;
+      player.vy = 0;
+    }
+    
     //移動処理
-    if(player.vx > 0 || player.vy >0 || player.v0 > 0){
+    if(player.vx >0 || player.vy > 0 || player.vx < 0 || player.vy < 0){
       v_diff(player);
     }else{
       player.v0 = 0;
@@ -194,6 +207,7 @@ setInterval(() => {//-----------------------------------------------------------
       player.vy = 0;
       player.moveFlag = false;
     }
+
     player.move();
     //場外判定
     out_judge(player);
@@ -216,17 +230,17 @@ function CreateColor() {
 
 //速度計算と移動位置計算
 function v_diff(player){
-  player.v0 = player.v0 - player.a *dt;
+  player.v0 = player.v0 - player.a * dt;
   distance = player.v0 * dt - (player.a * dt * dt)/2;
-  player.vx = distance * Math.cos(player.angle);
-  player.vy = distance * Math.sin(player.angle);
-}
+  player.vx = distance * Math.cos(player.move_angle);
+  player.vy = distance * Math.sin(player.move_angle);
+ }
 
 function hit_judge(adderplayer){
   flag = false;
   Object.values(player_list).forEach((subplayer) => {
     if(flag === false){
-      if(adderplayer.id===subplayer.id){
+      if(adderplayer === subplayer){
         flag=true;
         return;
       }else{
@@ -237,6 +251,7 @@ function hit_judge(adderplayer){
       R = radius + radius;
       r1 = Math.pow((adderplayer.x-subplayer.x),2)+Math.pow(adderplayer.y-subplayer.y,2);
       if((R*R) > r1){
+        adderplayer.v0 = 0;
         change_move_info(subplayer,adderplayer);
       }
     }
@@ -247,14 +262,24 @@ function hit_judge(adderplayer){
 function change_move_info(player,adderFplayer){
   vx = (player.x - adderFplayer.x);
   vy = (player.y - adderFplayer.y);
+  player.v0 = 50;//adderFplayer.v0 /= 2;
+  adderFplayer.v0 = 50;//adderFplayer.v0 /= 2;
   len = Math.sqrt(vx*vx + vy*vy);
-  distance = 2 * R - len;
-  if(len>0) len =  1/len;
+  distance = 2 * radius - len;
+  if(len>0){len =  1/len;}
+  vx = vx * len;
+  vy = vy * len;
   distance = distance/2;
   player.vx = vx * distance;
-  adderFplayer.vx = vx * distance;
   player.vy = vy * distance;
+  player.move_angle = Math.atan2(player.vy,player.vx);
+  //console.log(player.move_angle);
+  adderFplayer.vx =  vx * distance;
   adderFplayer.vy = vy * distance;
+  adderFplayer.move_angle = Math.atan2(adderFplayer.vy,adderFplayer.vx) - Math.PI;
+  //console.log(adderFplayer.move_angle);
+  //console.log(player.vx + '      ' + player.vy + '      ' + adderFplayer.vx + '       ' + adderFplayer.vy);
+  //console.log(player.v0 + "            " + adderFplayer.v0);
 }
 
 
