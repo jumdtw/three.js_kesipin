@@ -18,10 +18,7 @@ const radius = 40;
 
 //時間差分
 const dt = 0.1;
-//重力
-const g = 0.98;
-//動摩擦係数
-const u = 0.8
+
 
 class GameObject {
   contructor(obj = {}) {
@@ -99,6 +96,8 @@ class Player extends GameObject {
     this.m = 1;
     //進む向き
     this.move_angle;
+    //与える速度
+    this.F = 0;
 
     do {
       this.x = Math.random() * (FWIDTH - this.width);
@@ -109,6 +108,7 @@ class Player extends GameObject {
 
   addF() {
     this.move_angle = this.angle;
+    this.F = 100;
     this.v0 = 100.0;
     this.vx = 100 * Math.cos(this.move_angle);
     this.vy = 100 * Math.sin(this.move_angle);
@@ -202,6 +202,7 @@ setInterval(() => {//-----------------------------------------------------------
     if(player.vx >0 || player.vy > 0 || player.vx < 0 || player.vy < 0){
       v_diff(player);
     }else{
+      player.F = 100;
       player.v0 = 0;
       player.vx = 0;
       player.vy = 0;
@@ -231,6 +232,7 @@ function CreateColor() {
 //速度計算と移動位置計算
 function v_diff(player){
   player.v0 = player.v0 - player.a * dt;
+  player.F -= 1;
   distance = player.v0 * dt - (player.a * dt * dt)/2;
   player.vx = distance * Math.cos(player.move_angle);
   player.vy = distance * Math.sin(player.move_angle);
@@ -251,7 +253,6 @@ function hit_judge(adderplayer){
       R = radius + radius;
       r1 = Math.pow((adderplayer.x-subplayer.x),2)+Math.pow(adderplayer.y-subplayer.y,2);
       if((R*R) > r1){
-        adderplayer.v0 = 0;
         change_move_info(subplayer,adderplayer);
       }
     }
@@ -262,8 +263,9 @@ function hit_judge(adderplayer){
 function change_move_info(player,adderFplayer){
   vx = (player.x - adderFplayer.x);
   vy = (player.y - adderFplayer.y);
-  player.v0 = 50;//adderFplayer.v0 /= 2;
-  adderFplayer.v0 = 50;//adderFplayer.v0 /= 2;
+  console.log(adderFplayer.F * 0.3);
+  player.v0 = adderFplayer.F * 0.7;
+  adderFplayer.v0 = adderFplayer.F * 0.3;
   len = Math.sqrt(vx*vx + vy*vy);
   distance = 2 * radius - len;
   if(len>0){len =  1/len;}
