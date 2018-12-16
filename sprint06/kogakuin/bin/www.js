@@ -322,7 +322,7 @@ function out_judge(player){
 app.use(express.static('public'));
 
 app.get('/', (req, res) => {
-  res.sendFile('kogkauin/public/aaa.html');
+  res.sendFile('kogkauin/public/index.html');
 });
 
 server.listen(PORT, function () {
