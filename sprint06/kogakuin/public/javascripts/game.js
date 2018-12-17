@@ -5,10 +5,12 @@ const context = canvas.getContext('2d');
 const playerImage = $('#player-image')[0];
 const radius = 40
 
+roomnum = 1;
 
 
 function gameStart(){
-    socket.emit('game-start', {nickname: $("#nickname").val() },roomnum);
+    socket.emit('game-start' + String(roomnum), {nickname: $("#nickname").val() },roomnum);
+    console.log('emit.start');
     $("#start-screen").hide();
     $("#waitting-screen").show();
 }
@@ -30,14 +32,14 @@ $(document).on('keydown keyup', (event) => {
         }else{ /* keyup */
             movement[command] = false;
         }
-        socket.emit('movement', movement);
+        socket.emit('movement' + String(roomnum), movement);
     }
     if(event.key === ' ' && event.type === 'keydown'){
-        socket.emit('shoot');
+        socket.emit('shoot' + String(roomnum));
     }
 });
 
-socket.on('state', function(players, color_list) {
+socket.on('state' + String(roomnum), function(players, color_list) {
     //大事
     context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -98,7 +100,7 @@ socket.on('state', function(players, color_list) {
     
 });
 
-socket.on('dead', function() {
+socket.on('dead' + String(roomnum), function() {
     $("#loser-screen").show();
 });
 
@@ -106,12 +108,12 @@ socket.on('starting-game',function(){
     $("#waitting-screen").hide();
 });
 
-socket.on('over_menber',function(){
+socket.on('over_menber' + String(roomnum),function(){
     $("#waitting-screen").hide();
     $("#not_entry").show();
 });
 
-socket.on('winer',function(socketId){
+socket.on('winer' + String(roomnum),function(socketId){
     if(socket.id === socketId){
         $("#winer-screen").show();
     }
@@ -119,7 +121,7 @@ socket.on('winer',function(socketId){
 
 //現状の人数
 let pastmenber = 0;
-socket.on('now_menber',function(menber){
+socket.on('now_menber' + String(roomnum),function(menber){
 
     if(menber!=pastmenber){
         lists = document.getElementById('before_num');
@@ -134,7 +136,7 @@ socket.on('now_menber',function(menber){
 });
 
 //誰のturnか知らせる。
-socket.on('Alert_turn',function(player){
+socket.on('Alert_turn' + String(roomnum),function(player){
     if(player.socketId!=socket.id){
         lists = document.getElementById('alert_turn');
         broccoli = lists.lastElementChild;

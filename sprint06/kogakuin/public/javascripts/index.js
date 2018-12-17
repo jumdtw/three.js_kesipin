@@ -1,41 +1,46 @@
-
 const socket = io();
-const canvas = $('#canvas-2d')[0];
-const context = canvas.getContext('2d');
-const playerImage = $('#player-image')[0];
-const radius = 40
 
 
+let room1 = document.getElementById('1_room_button');
+let room2 = document.getElementById('2_room_button');
+let room3 = document.getElementById('3_room_button');
+let room4 = document.getElementById('4_room_button');
+let room5 = document.getElementById('5_room_button');
+let room6 = document.getElementById('6_room_button');
 
-function gameStart(){
-    socket.emit('game-start', {nickname: $("#nickname").val() },roomnum);
-    $("#start-screen").hide();
-    $("#waitting-screen").show();
+function room_1(){
+    location.href='/game.html';
+    socket.emit('createGame',1);
 }
-$("#start-button").on('click', gameStart);
+function room_2(){
+    window.location.href='/game.html';
+    socket.emit('createGame',2);
+}
+function room_3(){
+    window.location.href='/game.html';
+    socket.emit('createGame',3);
+}
+function room_4(){
+    window.location.href='/game.html';
+    socket.emit('createGame',4);
+}
+function room_5(){
+    window.location.href='/game.html';
+    socket.emit('createGame',5);
+}
+function room_6(){
+    window.location.href='/game.html';
+    socket.emit('createGame',6);
+}
 
-let movement = {};
+room1.onclick = room_1;
+room2.onclick = room_2;
+room3.onclick = room_3;
+room4.onclick = room_4;
+room5.onclick = room_5;
+room6.onclick = room_6;
 
-$(document).on('keydown keyup', (event) => {
-    const KeyToCommand = {
-        'ArrowUp': 'forward',
-        'ArrowDown': 'back',
-        'ArrowLeft': 'left',
-        'ArrowRight': 'right',
-    };
-    const command = KeyToCommand[event.key];
-    if(command){
-        if(event.type === 'keydown'){
-            movement[command] = true;
-        }else{ /* keyup */
-            movement[command] = false;
-        }
-        socket.emit('movement', movement);
-    }
-    if(event.key === ' ' && event.type === 'keydown'){
-        socket.emit('shoot');
-    }
-});
+
 
 socket.on('state', function(players, color_list) {
     //大事

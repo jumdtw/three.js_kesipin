@@ -1,6 +1,3 @@
-//https://paiza.hatenablog.com/entry/paizacloud_online_multiplayer_game
-//http://marupeke296.com/
-//https://hakuhin.jp/as/collide.html
 
 const express = require('express');
 const http = require('http');
@@ -23,7 +20,12 @@ const dt = 0.1;
 GameStartFlag = 0;
 class Main_Game {
   constructor(){}
-  Main_Game_Start(Ssocket,roomnum){
+  Main_Game_Start(roomnum){
+    roomnum = 1;//===============================================================================
+    //--------------------------------------------------========================================
+    //====================================わすれるな==============================================
+    //===============================================================================
+    //--------------------------------------------------========================================
     //いままでのゲームをクラス化しただけ
     class GameObject {
       constructor(obj = {}) {
@@ -160,9 +162,9 @@ class Main_Game {
     //io.on('connection', onConnection);
 
     function Opensocket() {
-      console.log('connect succesfull room' + String(numroom));
+      console.log('connect succesfull room' + String(roomnum));
       let player = null;
-      Ssocket.on('game-start' + String(numroom), (config) => {
+      Ssocket.on('game-start' + String(roomnum), (config) => {
         if(Object.keys(player_list).length < 3 && GameStartFlag===0){
           player = new Player({
             socketId: socket.id,
@@ -170,21 +172,23 @@ class Main_Game {
           });
           player_list[player.id] = player;
           color_list[player.id] = CreateColor();
+          console.log(Object.keys(player_list).length)
           if(Object.keys(player_list).length === 3){
             GameStartFlag = 1;
-            io.sockets.emit('starting-game' + String(numroom))
+            io.sockets.emit('starting-game' + String(roomnum))
+            MAIN_GAME();
           }
         }else{
-          io.to(socket.id).emit('over_menber' + String(numroom));
+          io.to(socket.id).emit('over_menber' + String(roomnum));
         }
       });
 
-      Ssocket.on('movement' + String(numroom), function (movement) {
+      Ssocket.on('movement' + String(roomnum), function (movement) {
         if (!player || player.health === 0) { return; }
         player.movement = movement;
       });
 
-      Ssocket.on('shoot' + String(numroom), function () {
+      Ssocket.on('shoot' + String(roomnum), function () {
         if (!player || player.health === 0) { return; }
         if(player.moveFlag==false){
           player.moveFlag = true;
@@ -192,12 +196,11 @@ class Main_Game {
         }
       });
 
-      Ssocket.on('disconnect' + String(numroom), () => {
+      Ssocket.on('disconnect' + String(roomnum), () => {
         if (!player) { return; }
         delete player_list[player.id];
         player = null
       });
-
     }
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -205,61 +208,64 @@ class Main_Game {
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    Opensocket();
-    while(GameStartFlag != 2){
-      Object.values(player_list).forEach((Nplayer) => {
-        io.sockets.emit('alert_turn',Nplayer);//現在誰のturnなのかをalert
-        Nplayer.turnFlag = true;
-        while(finish_turn(Nplayer)===true){
-          setInterval(() => {
-            Object.values(player_list).forEach((player) => {
-              if(GameStartFlag === 1){
-                const movement = player.movement;
-                if (movement.left && player.moveFlag===false && player.turnFlag === true) {
-                  player.angle -= 0.1;
-                }
-                if (movement.right && player.moveFlag===false && player.turnFlag === true) {
-                  player.angle += 0.1;
-                }
+    //Opensocket();//ソケットを開ける
+    function MAIN_GAME(){
+      while(GameStartFlag != 2){
+        console.log('a');
+        Object.values(player_list).forEach((Nplayer) => {
+          io.sockets.emit('alert_turn' + String(roomnum),Nplayer);//現在誰のturnなのかをalert
+          Nplayer.turnFlag = true;
+          while(finish_turn(Nplayer)===true){
+            setInterval(() => {
+              Object.values(player_list).forEach((player) => {
+                if(GameStartFlag === 1){
+                  const movement = player.movement;
+                  if (movement.left && player.moveFlag===false && player.turnFlag === true) {
+                    player.angle -= 0.1;
+                  }
+                  if (movement.right && player.moveFlag===false && player.turnFlag === true) {
+                    player.angle += 0.1;
+                  }
 
-                if(player.v0 < 0 ){
-                  player.vx = 0;
-                  player.vy = 0;
-                }
-                
-                //移動処理
-                if(player.vx >0 || player.vy > 0 || player.vx < 0 || player.vy < 0){
-                  v_diff(player);
-                }else{
-                  player.F = 100;
-                  player.v0 = 0;
-                  player.vx = 0;
-                  player.vy = 0;
-                  moveFlag = false;
-                }
+                  if(player.v0 < 0 ){
+                    player.vx = 0;
+                    player.vy = 0;
+                  }
+                  
+                  //移動処理
+                  if(player.vx >0 || player.vy > 0 || player.vx < 0 || player.vy < 0){
+                    v_diff(player);
+                  }else{
+                    player.F = 100;
+                    player.v0 = 0;
+                    player.vx = 0;
+                    player.vy = 0;
+                    moveFlag = false;
+                  }
 
-                player.move();
-                //場外判定
-                out_judge(player);
-                //あたり判定
-                hit_judge(player);
-              
-                if(Object.keys(player_list).length===1){
-                  Object.values(player_list).forEach((player) => {io.sockets.emit('winer',player.socketId)});
-                  GameStartFlag = 2;
-                }
+                  player.move();
+                  //場外判定
+                  out_judge(player);
+                  //あたり判定
+                  hit_judge(player);
                 
-              }else if(GameStartFlag === 0){
-                io.sockets.emit('now_menber',Object.keys(player_list).length)
-              }
-            });
-            io.sockets.emit('state', player_list, color_list);
-          }, 1000 / 30);//setInterval
-          Nplayer.turnFlag = false;
-        }//finish_turn
-      });//alert turn
-    }//endgame
-    return GameStartFlag;
+                  if(Object.keys(player_list).length===1){
+                    Object.values(player_list).forEach((player) => {io.sockets.emit('winer' + String(roomnum),player.socketId)});
+                    GameStartFlag = 2;
+                  }
+                  
+                }else if(GameStartFlag === 0){
+                  io.sockets.emit('now_menber' + String(roomnum),Object.keys(player_list).length)
+                }
+              });
+              io.sockets.emit('state' + String(roomnum), player_list, color_list);
+            }, 1000 / 30);//setInterval
+            Nplayer.turnFlag = false;
+          }//finish_turn
+        });//alert turn
+      }//endgame
+      return GameStartFlag;
+    }
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -349,44 +355,70 @@ class Main_Game {
   }
 }
 
-let createdroom = [];
-
+let room_list = [];
 
 io.on('connection', onConnection);
 function onConnection(socket) {
-  socket.on('game-start', (config) => {
-    if(Object.keys(player_list).length < 3 && GameStartFlag===0){
-      player = new Player({
-        socketId: socket.id,
-        nickname: config.nickname,
-      });
-      player_list[player.id] = player;
-      color_list[player.id] = CreateColor();
-      if(Object.keys(player_list).length === 3){
-        GameStartFlag = 1;
-        io.sockets.emit('starting-game')
-      }
-    }else{
-      io.to(socket.id).emit('over_menber');
-    }
-  });
   //roomがなかった場合roomを作成
+  STARTOPENSOCKET(socket);
+}
+
+function STARTOPENSOCKET(socket){
   socket.on('createGame', function (numroom) {
     flag = true;
     for(let i=0;i<room_list.length;i++){
-      if(createdroom[i] === numroom){
+      if(room_list[i] === numroom){
         flag = false;
       }
     }
     if(flag){
+      room_list.push(numroom);
       roomN = new Main_Game()
-      ReturnFlag = roomN.Main_Game_Start(socket,numroom);
-      if(ReturnFlag === 2){
-        delete roomN;
-      }
+      
+      console.log('connect succesfull room' + String(roomnum));
+      let player = null;
+      socket.on('game-start' + String(roomnum), (config) => {
+        if(Object.keys(player_list).length < 3 && GameStartFlag===0){
+          player = new Player({
+            socketId: socket.id,
+            nickname: config.nickname,
+          });
+          player_list[player.id] = player;
+          color_list[player.id] = CreateColor();
+          console.log(Object.keys(player_list).length)
+          if(Object.keys(player_list).length === 3){
+            GameStartFlag = 1;
+            io.sockets.emit('starting-game' + String(roomnum))
+            MAIN_GAME();
+          }
+        }else{
+          io.to(socket.id).emit('over_menber' + String(roomnum));
+        }
+      });
+
+      socket.on('movement' + String(roomnum), function (movement) {
+        if (!player || player.health === 0) { return; }
+        player.movement = movement;
+      });
+
+      socket.on('shoot' + String(roomnum), function () {
+        if (!player || player.health === 0) { return; }
+        if(player.moveFlag==false){
+          player.moveFlag = true;
+          player.addF();
+        }
+      });
+
+      socket.on('disconnect' + String(roomnum), () => {
+        if (!player) { return; }
+        delete player_list[player.id];
+        player = null
+      });
+
+
+      roomN.Main_Game_Start(socket,numroom);
     }
   });
-
 }
 
 
