@@ -25,13 +25,30 @@ body{
   background-color: rgba(128,128,128,0.5);
 }
 
-#waitting{
+.waitting{
+  text-align: center;
+  width: 100%; 
+  font-size: xx-large;
+}
+
+.alert{
   text-align: center;
   width: 100%; 
   font-size: xx-large;
 }
 
 #not_entry{
+  width:100%; 
+  height:100%; 
+  display: none; 
+  align-items: center; 
+  position:absolute; 
+  z-index:10;
+  padding: 350px 0px 0px 0px;
+  background-color:rgba(128,128,128,0.5);
+}
+
+#alert_turn{
   width:100%; 
   height:100%; 
   display: none; 

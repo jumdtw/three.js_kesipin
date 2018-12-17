@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/game_server.js"
+    "start": "node ./bin/gameserver.js"
   },
   "dependencies": {
     "cookie-parser": "~1.4.3",
