@@ -19,6 +19,7 @@ const radius = 40;
 //時間差分
 const dt = 0.1;
 
+GameStartFlag = 0;
 
 class GameObject {
   contructor(obj = {}) {
@@ -107,11 +108,13 @@ class Player extends GameObject {
   }
 
   addF() {
-    this.move_angle = this.angle;
-    this.F = 100;
-    this.v0 = 100.0;
-    this.vx = 100 * Math.cos(this.move_angle);
-    this.vy = 100 * Math.sin(this.move_angle);
+    if(GameStartFlag === 1){
+      this.move_angle = this.angle;
+      this.F = 200;
+      this.v0 = 200.0;
+      this.vx = this.v0 * Math.cos(this.move_angle);
+      this.vy = this.v0 * Math.sin(this.move_angle);
+    }
   }
 
   remove() {
@@ -154,12 +157,21 @@ function onConnection(socket) {
   console.log('connect succesfull')
   let player = null;
   socket.on('game-start', (config) => {
-    player = new Player({
-      socketId: socket.id,
-      nickname: config.nickname,
-    });
-    player_list[player.id] = player;
-    color_list[player.id] = CreateColor();
+
+    if(Object.keys(player_list).length < 3 && GameStartFlag===0){
+      player = new Player({
+        socketId: socket.id,
+        nickname: config.nickname,
+      });
+      player_list[player.id] = player;
+      color_list[player.id] = CreateColor();
+      if(Object.keys(player_list).length === 3){
+        GameStartFlag = 1;
+        io.sockets.emit('starting-game')
+      }
+    }else{
+      io.to(socket.id).emit('over_menber');
+    }
   });
 
   socket.on('movement', function (movement) {
@@ -182,44 +194,52 @@ function onConnection(socket) {
   });
 
 }
-
 setInterval(() => {//-----------------------------------------------------------------------------------------------------------------------------------
   Object.values(player_list).forEach((player) => {
-    const movement = player.movement;
-    if (movement.left && player.moveFlag===false) {
-      player.angle -= 0.1;
-    }
-    if (movement.right && player.moveFlag===false) {
-      player.angle += 0.1;
-    }
+    if(GameStartFlag === 1){
+      const movement = player.movement;
+      if (movement.left && player.moveFlag===false) {
+        player.angle -= 0.1;
+      }
+      if (movement.right && player.moveFlag===false) {
+        player.angle += 0.1;
+      }
 
-    if(player.v0 < 0 ){
-      player.vx = 0;
-      player.vy = 0;
-    }
+      if(player.v0 < 0 ){
+        player.vx = 0;
+        player.vy = 0;
+      }
+      
+      //移動処理
+      if(player.vx >0 || player.vy > 0 || player.vx < 0 || player.vy < 0){
+        v_diff(player);
+      }else{
+        player.F = 100;
+        player.v0 = 0;
+        player.vx = 0;
+        player.vy = 0;
+        player.moveFlag = false;
+      }
+
+      player.move();
+      //場外判定
+      out_judge(player);
+      //あたり判定
+      hit_judge(player);
     
-    //移動処理
-    if(player.vx >0 || player.vy > 0 || player.vx < 0 || player.vy < 0){
-      v_diff(player);
-    }else{
-      player.F = 100;
-      player.v0 = 0;
-      player.vx = 0;
-      player.vy = 0;
-      player.moveFlag = false;
+      if(Object.keys(player_list).length===1){
+        Object.values(player_list).forEach((player) => {io.sockets.emit('winer',player.socketId)});
+        GameStartFlag = 2;
+      }
+    }else if(GameStartFlag === 0){
+      io.sockets.emit('now_menber',Object.keys(player_list).length)
     }
-
-    player.move();
-    //場外判定
-    out_judge(player);
-    //あたり判定
-    hit_judge(player);
-  
   });//--------------------------------------------------------------------------------------------------------------------------------------------------------
 
   io.sockets.emit('state', player_list, color_list);
 
 }, 1000 / 30);
+
 
 
 function CreateColor() {
@@ -263,7 +283,6 @@ function hit_judge(adderplayer){
 function change_move_info(player,adderFplayer){
   vx = (player.x - adderFplayer.x);
   vy = (player.y - adderFplayer.y);
-  console.log(adderFplayer.F * 0.3);
   player.v0 = adderFplayer.F * 0.7;
   adderFplayer.v0 = adderFplayer.F * 0.3;
   len = Math.sqrt(vx*vx + vy*vy);
@@ -275,19 +294,15 @@ function change_move_info(player,adderFplayer){
   player.vx = vx * distance;
   player.vy = vy * distance;
   player.move_angle = Math.atan2(player.vy,player.vx);
-  //console.log(player.move_angle);
   adderFplayer.vx =  vx * distance;
   adderFplayer.vy = vy * distance;
   adderFplayer.move_angle = Math.atan2(adderFplayer.vy,adderFplayer.vx) - Math.PI;
-  //console.log(adderFplayer.move_angle);
-  //console.log(player.vx + '      ' + player.vy + '      ' + adderFplayer.vx + '       ' + adderFplayer.vy);
-  //console.log(player.v0 + "            " + adderFplayer.v0);
 }
 
 
 function out_judge(player){
   if(player.x <0 || player.x >1000 || player.y < 0 || player.y >1000){
-    io.sockets.emit('dead', player.socketId);
+    io.to(player.socketId).emit('dead');
     player.remove();
   }
 }
@@ -295,7 +310,7 @@ function out_judge(player){
 app.use(express.static('public'));
 
 app.get('/', (req, res) => {
-  res.sendFile('kogkauin/public/index.html');
+  res.sendFile('game.html');
 });
 
 server.listen(PORT, function () {

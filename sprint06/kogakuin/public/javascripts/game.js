@@ -9,6 +9,7 @@ const radius = 40
 function gameStart(){
     socket.emit('game-start', {nickname: $("#nickname").val() });
     $("#start-screen").hide();
+    $("#waitting-screen").show();
 }
 $("#start-button").on('click', gameStart);
 
@@ -96,8 +97,35 @@ socket.on('state', function(players, color_list) {
     
 });
 
-socket.on('dead', function(socketId) {
-    if(socket.id === socketId){
-        $("#end-screen").show();
-    }  
+socket.on('dead', function() {
+    $("#loser-screen").show();
 });
+
+socket.on('starting-game',function(){
+    $("#waitting-screen").hide();
+});
+
+socket.on('over_menber',function(){
+    $("#waitting-screen").hide();
+    $("#not_entry").show();
+});
+
+socket.on('winer',function(socketId){
+    if(socket.id === socketId){
+        $("#winer-screen").show();
+    }
+});
+let pastmenber = 0;
+socket.on('now_menber',function(menber){
+
+    if(menber!=pastmenber){
+        lists = document.getElementById('before_num');
+        broccoli = lists.lastElementChild;
+        lists.removeChild(broccoli);
+        pastmenber = menber; 
+        let element = document.createElement('p');
+        element.className = 'waitting';
+        element.textContent = String(menber) + '/3';
+        document.getElementById('before_num').appendChild(element);
+    }
+})

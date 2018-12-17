@@ -1,0 +1,87 @@
+body{
+  background-image: url("../images/user_display/background_table.jpg"); 
+  background-size: cover;
+}
+#start-screen{
+  width:100%; 
+  height:100%; 
+  display: flex; 
+  align-items: center; 
+  position:absolute; 
+  z-index:10;
+  background-color: rgba(128,128,128,0.5);
+}
+
+#waitting-screen{
+  width:100%; 
+  height:100%; 
+  display: none; 
+  align-items: center; 
+  position:absolute; 
+  z-index:10;
+  font-weight: 700;
+  margin: auto;
+  padding: 300px 0px 0px 0px;
+  background-color: rgba(128,128,128,0.5);
+}
+
+#waitting{
+  text-align: center;
+  width: 100%; 
+  font-size: xx-large;
+}
+
+#not_entry{
+  width:100%; 
+  height:100%; 
+  display: none; 
+  align-items: center; 
+  position:absolute; 
+  z-index:10;
+  padding: 350px 0px 0px 0px;
+  background-color:rgba(128,128,128,0.5);
+}
+
+#Over{
+  list-style: none;
+  display: block;
+  margin: auto;
+}
+
+#loser-screen{
+  width:100%; 
+  height:100%; 
+  display: none; 
+  align-items: center; 
+  position:absolute; 
+  z-index:10;
+  background-color:rgba(128,128,128,0.5);
+}
+
+#winer-screen{
+  width:100%; 
+  height:100%; 
+  display: none; 
+  align-items: center; 
+  position:absolute; 
+  z-index:10;
+  background-color:rgba(128,128,128,0.5);
+}
+
+#winer{
+  list-style: none;
+  display: block;
+  margin: auto;
+  padding: 300px 0px 0px 0px;
+}
+
+#loser{
+  display: table;
+  margin: auto;
+}
+
+.loser_cell{
+  display: table-cell;
+  vertical-align: middle;
+  padding: 400px 0px 0px 0px;
+}
