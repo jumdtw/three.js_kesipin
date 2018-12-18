@@ -2,11 +2,10 @@
 const socket = io();
 const canvas = $('#canvas-2d')[0];
 const context = canvas.getContext('2d');
-const playerImage = $('#player-image')[0];
 const radius = 40
 
 numroom = 1;
-
+let myplayerId = -1;
 
 function gameStart(){
     socket.emit('game-start', {nickname: $("#nickname").val() },numroom);
@@ -33,15 +32,14 @@ $(document).on('keydown keyup', (event) => {
         }else{ /* keyup */
             movement[command] = false;
         }
-        socket.emit('movement', movement,numroom);
+        socket.emit('movement', movement,myplayerId);
     }
     if(event.key === ' ' && event.type === 'keydown'){
-        socket.emit('shoot' + String(roomnum));
+        socket.emit('shoot',numroom,myplayerId);
     }
 });
 
 socket.on('state', function(players, color_list,Numroom) {
-
     if(numroom === Numroom){
         //大事
         context.clearRect(0, 0, canvas.width, canvas.height);
@@ -60,12 +58,9 @@ socket.on('state', function(players, color_list,Numroom) {
         context.rect(0, 0, canvas.width, canvas.height);
         
         context.stroke();
-    }
-
-
-    //プレイヤー描画
-    Object.values(players).forEach((player) => {
-        if(player.roomNUM === Numroom){
+    
+        //プレイヤー描画
+        Object.values(players).forEach((player) => {
             let radius = 40
             context.save();
             context.font = '20px Bold Arial';
@@ -98,9 +93,9 @@ socket.on('state', function(players, color_list,Numroom) {
                 context.fillText('You', player.x-20, player.y - radius-10);
                 context.restore();
             }
-        }
 
-    });
+        });
+    }
     
 });
 
@@ -128,6 +123,16 @@ socket.on('winer',function(player){
         $("#winer-screen").show();
     }
 });
+
+socket.on('yourID',function(ID,Numroom){
+    if(Numroom===numroom){
+        if(myplayerId === -1){
+            myplayerId = ID;
+        }
+    }
+});
+
+
 
 //現状の人数
 let pastmenber = 0;
