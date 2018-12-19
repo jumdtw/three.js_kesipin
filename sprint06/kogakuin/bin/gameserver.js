@@ -402,8 +402,10 @@ function onConnection(socket) {
 
   socket.on('movement', function (movement,playerId) {
     Object.values(roomN.player_list).forEach((player) => {
-      if(player.id === playerId){
-        player.movement = movement;
+      if(roomN.GameStartFlag != 1){
+        if(player.id === playerId){
+          player.movement = movement;
+        }
       }
     });
   });
