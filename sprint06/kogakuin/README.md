@@ -5,3 +5,6 @@
 -https://paiza.hatenablog.com/entry/paizacloud_online_multiplayer_game
 -http://marupeke296.com/
 -https://hakuhin.jp/as/collide.html
+-https://q-az.net/rain-drop-js/
+-http://wp.tech-style.info/archives/742
+-

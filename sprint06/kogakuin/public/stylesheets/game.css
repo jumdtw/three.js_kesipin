@@ -2,6 +2,17 @@ body{
   background-image: url("../images/user_display/background_table.jpg"); 
   background-size: cover;
 }
+
+a{
+  color: #FFFFFF;
+  text-decoration: none;
+}
+
+a:hover{
+  color: #000000;
+  text-decoration: none;
+}
+
 #start-screen{
   width:100%; 
   height:100%; 

@@ -16,25 +16,12 @@ const radius = 40;
 //時間差分
 const dt = 0.1;
 
-let numroom = 1;//===============================================================================
-    //--------------------------------------------------========================================
-    //====================================わすれるな==============================================
-    //===============================================================================
-    //--------------------------------------------------========================================
-    
+//反発係数
+const e = 0.2;
 
-//let room_list = [];
-//let room_dir = {};
-//let each_room_player_list = {};
-//let each_room_color_list = {};
-//let playing_room = [];
 var room_list = [];
-//var Each_room_player_list = {1:{},2:{},3:{},3:{},5:{},6:{},};
-//var Each_room_color_list = {1:{},2:{},3:{},3:{},5:{},6:{},};
 var playing_room = [false,false,false,false,false,false];
-//for (let i=1;i<=6;i++){each_room_player_list[i]={};}
-//for (let i=1;i<=6;i++){each_room_color_list[i]={};}
-//for (let i=1;i<=6;i++){playing_room[i]=false;}
+
 
 class GameObject {
   constructor(obj = {}) {
@@ -107,11 +94,13 @@ class Player extends GameObject {
     //進む向き
     this.move_angle;
     //与える速度
-    this.F = 0;
+    this.v0 = 0;
     //自分のturn以外は動かないようにする
     this.turnFlag = false;
+    this.moveFlag = false;
     //部屋番号
-    this.roomNUM = numroom;
+    this.roomNUM;
+
 
     this.x = Math.random() * (FWIDTH - this.width);
     this.y = Math.random() * (FHEIGHT - this.height);
@@ -119,17 +108,18 @@ class Player extends GameObject {
   }
 
   addF() {
-    //if(this.turnFlag === true){
+    if(this.moveFlag === false){
+      this.moveFlag = true;
       this.move_angle = this.angle;
-      this.F = 200;
-      this.v0 = 200.0;
+      this.v0 = 100.0;
       this.vx = this.v0 * Math.cos(this.move_angle);
       this.vy = this.v0 * Math.sin(this.move_angle);
-    //}
+    }
   }
 
-  remove() {
+  remove(player_list) {
     delete player_list[this.id];
+    return player_list;
   }
 
   toJSON() {
@@ -190,12 +180,11 @@ class Main_Game {
   constructor(Numroom){
     this.player_list = {};
     this.color_list = {};
-    this.numroom = Numroom
+    this.numroom = Numroom;
     this.GameStartFlag = 0;
    
     setInterval(()=>{
       Object.values(this.player_list).forEach((player) => {
-        //console.log(player.angle);
         if(this.GameStartFlag === 1){
           const movement = player.movement;
           if (movement.left && player.moveFlag===false) {
@@ -214,7 +203,6 @@ class Main_Game {
           if(player.vx >0 || player.vy > 0 || player.vx < 0 || player.vy < 0){
             this.v_diff(player);
           }else{
-            player.F = 100;
             player.v0 = 0;
             player.vx = 0;
             player.vy = 0;
@@ -223,19 +211,20 @@ class Main_Game {
     
           player.move();
           //場外判定
-          this.out_judge(player);
+          this.player_list = this.out_judge(player,this.numroom,this.player_list);
           //あたり判定
           this.hit_judge(player);
         
           if(Object.keys(this.player_list).length===1){
-            Object.values(this.player_list).forEach((player) => {io.sockets.emit('winer',player,numroom)});
+            Object.values(this.player_list).forEach((player) => {io.sockets.emit('winer',player,this.numroom)});
             this.GameStartFlag = 2;
           } 
         }else if(this.GameStartFlag === 0){
-          io.sockets.emit('now_menber',Object.keys(this.player_list).length,numroom)
+          io.sockets.emit('now_menber',Object.keys(this.player_list).length,this.numroom)
         }
       });
-      io.sockets.emit('state', this.player_list, this.color_list,numroom);
+      
+      io.sockets.emit('state', this.player_list, this.color_list,this.numroom);
     }, 1000 / 30);//setInterval
   }
 
@@ -260,26 +249,31 @@ class Main_Game {
     });
   }
 
-  out_judge(player){
+  out_judge(player,Numroom,player_list){
     if(player.x <0 || player.x >1000 || player.y < 0 || player.y >1000){
-      io.to(player.socketId).emit('dead',numroom);
-      //player.remove();
+      io.to(player.socketId).emit('dead',Numroom);
+      player.remove(player_list);
     }
+    return player_list;
   }
 
   v_diff(player){
     player.v0 = player.v0 - player.a * dt;
-    player.F -= 1;
     let distance = player.v0 * dt - (player.a * dt * dt)/2;
-    player.vx = distance * Math.cos(player.move_angle);
-    player.vy = distance * Math.sin(player.move_angle);
+    player.vx = distance * Math.cos(Math.atan2(player.vy,player.vx));
+    player.vy = distance * Math.sin(Math.atan2(player.vy,player.vx));
+    //player.vx = distance * Math.cos(player.move_angle);
+    //player.vy = distance * Math.sin(player.move_angle);
   }
 
   change_move_info(player,adderFplayer){
     let vx = (player.x - adderFplayer.x);
     let vy = (player.y - adderFplayer.y);
-    player.v0 = adderFplayer.F * 0.7;
-    adderFplayer.v0 = adderFplayer.F * 0.3;
+    let before_adderFplayer_energy = (adderFplayer.v0*adderFplayer.v0*adderFplayer.m)/2;
+    let after_adderFplayer_energy = (e*adderFplayer.v0*e*adderFplayer.v0*adderFplayer.m)/2;
+    let get_energy = before_adderFplayer_energy - after_adderFplayer_energy;
+    player.v0 = Math.sqrt(((2*(get_energy))/player.m));
+    adderFplayer.v0 = adderFplayer.v0 * e;
     let len = Math.sqrt(vx*vx + vy*vy);
     let distance = 2 * radius - len;
     if(len>0){len =  1/len;}
@@ -288,10 +282,10 @@ class Main_Game {
     distance = distance/2;
     player.vx = vx * distance;
     player.vy = vy * distance;
-    player.move_angle = Math.atan2(player.vy,player.vx);
+    //player.move_angle = Math.atan2(player.vy,player.vx);
     adderFplayer.vx =  vx * distance;
     adderFplayer.vy = vy * distance;
-    adderFplayer.move_angle = Math.atan2(adderFplayer.vy,adderFplayer.vx) - Math.PI;
+    //adderFplayer.move_angle = Math.atan2(player.vy,player.vx) - Math.PI;
   }
 
   Main_Game_Start(Numroom){
@@ -338,61 +332,48 @@ class Main_Game {
 //ここからsocket処理
 //------------------------------------------------------------------------------------------------------
 
-
-//let each_room_player_list = {1:{},2:{},3:{},3:{},5:{},6:{},};
-//let each_room_color_list = {1:{},2:{},3:{},3:{},5:{},6:{},};
-//let playing_room = [false,false,false,false,false,false];
-//let room_dir = {1:{},2:{},3:{},3:{},5:{},6:{},}
-
 io.on('connection', onConnection);
 function onConnection(socket) {
   //roomがなかった場合roomを作成し、socketを開放する。
-  //let room_dir = {1:{},2:{},3:{},3:{},5:{},6:{},}
-  let each_room_player_list = {1:{},2:{},3:{},3:{},5:{},6:{},};
-  let each_room_color_list = {1:{},2:{},3:{},3:{},5:{},6:{},};
-
-  socket.on('createGame', function (numroom) {
-    
+  socket.on('createGame', function (Numroom) {
     let flag = true;
+    console.log(Numroom);
     for(let i=0;i<room_list.length;i++){
-      if(room_list[i] === numroom){
+      if(room_list[i] === Numroom){
         flag = false;
       }
     }
-
     if(flag){
-      room_list.push(numroom);
-      io.sockets.emit('starting-game',numroom)
-      roomN = new Main_Game(numroom); 
+      room_list.push(Numroom);
+      roomN = new Main_Game(Numroom); 
       console.log('connect succesfull room');
     }
   });
 
-  socket.on('game-start', function(config,numroom) {
-    if(Object.keys(roomN.player_list).length < 3 && playing_room[numroom] === false){
-      player = new Player({
-        socketId: socket.id,
-        nickname: config.nickname,
-      });
-      //0から2;
-      roomN.player_list[player.id] = player;
-      io.sockets.emit('yourID',player.id,numroom)
-      roomN.color_list[player.id] = CreateColor();
-      if(Object.keys(roomN.player_list).length === 3){
-        playing_room[numroom] = true;
-        roomN.GameStartFlag = 1;
-        io.sockets.emit('starting-game',numroom)
-        if(roomN.Main_Game_Start(numroom)){
-          playing_room[numroom] = false;
-          delete roomN;
+  socket.on('game-start', function(config,Numroom) {
+    if(roomN.numroom === Numroom && roomN.GameStartFlag===0){
+      if(Object.keys(roomN.player_list).length < 3){
+        player = new Player({
+          socketId: socket.id,
+          nickname: config.nickname,
+        });
+        roomN.player_list[player.id] = player;
+        io.sockets.emit('yourID',player.id,Numroom)
+        roomN.color_list[player.id] = CreateColor();
+        if(Object.keys(roomN.player_list).length === 3){
+          playing_room[Numroom] = true;
+          roomN.GameStartFlag = 1;
+          io.sockets.emit('starting-game',Numroom);
+          //main game start
+          roomN.Main_Game_Start(Numroom);
         }
+      }else{
+        io.to(socket.id).emit('over_menber',Numroom);
       }
-    }else{
-      io.to(socket.id).emit('over_menber',numroom);
     }
   });
 
-  socket.on('shoot', function(Numroom,playerId){
+  socket.on('shoot', function(playerId){
     Object.values(roomN.player_list).forEach((player) => {
       if(player.id === playerId){
         player.addF();
@@ -402,7 +383,7 @@ function onConnection(socket) {
 
   socket.on('movement', function (movement,playerId) {
     Object.values(roomN.player_list).forEach((player) => {
-      if(roomN.GameStartFlag != 1){
+      if(roomN.GameStartFlag === 1){
         if(player.id === playerId){
           player.movement = movement;
         }

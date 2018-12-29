@@ -4,12 +4,17 @@ const canvas = $('#canvas-2d')[0];
 const context = canvas.getContext('2d');
 const radius = 40
 
-numroom = 1;
+var numroom = -1;
 let myplayerId = -1;
+
+
+
+window.onload = function(){
+    numroom = parseFloat(localStorage.getItem('roomNum'));
+}
 
 function gameStart(){
     socket.emit('game-start', {nickname: $("#nickname").val() },numroom);
-    console.log('emit.start');
     $("#start-screen").hide();
     $("#waitting-screen").show();
 }
@@ -17,6 +22,7 @@ function gameStart(){
 $("#start-button").on('click', gameStart);
 
 let movement = {};
+
 
 $(document).on('keydown keyup', (event) => {
     const KeyToCommand = {
@@ -35,7 +41,7 @@ $(document).on('keydown keyup', (event) => {
         socket.emit('movement', movement,myplayerId);
     }
     if(event.key === ' ' && event.type === 'keydown'){
-        socket.emit('shoot',numroom,myplayerId);
+        socket.emit('shoot',myplayerId);
     }
 });
 

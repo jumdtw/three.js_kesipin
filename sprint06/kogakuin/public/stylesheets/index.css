@@ -1,3 +1,8 @@
 .row .BackGround{
     background-image: url(../images/ayase.PNG);
 }
+
+a {
+    color: #FFFFFF;
+    text-decoration: none;
+}

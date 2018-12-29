@@ -9,28 +9,52 @@ let room5 = document.getElementById('5_room_button');
 let room6 = document.getElementById('6_room_button');
 
 function room_1(){
+    num = 1;
     location.href='/game.html';
+    save_Storage(num);
     socket.emit('createGame',1);
 }
 function room_2(){
+    num = 2;
     window.location.href='/game.html';
+    save_Storage(num);
     socket.emit('createGame',2);
+    console.log('emit roomnum')
 }
 function room_3(){
+    num = 3;
     window.location.href='/game.html';
+    save_Storage(num);
     socket.emit('createGame',3);
 }
 function room_4(){
+    num = 4;
     window.location.href='/game.html';
+    save_Storage(num);
     socket.emit('createGame',4);
 }
 function room_5(){
+    num = 5;
     window.location.href='/game.html';
+    save_Storage(num);
     socket.emit('createGame',5);
 }
 function room_6(){
+    num = 6;
     window.location.href='/game.html';
+    save_Storage(num);
     socket.emit('createGame',6);
+}
+
+function save_Storage(num){
+    if(('localStorage' in window) && (window.localStorage !== null)) {
+        // ローカルストレージが使える
+        localStorage.setItem("roomNum",num);
+    } else {
+        // 使えない。。。
+        console.log('err storage');
+        return -1;
+    }
 }
 
 room1.onclick = room_1;
