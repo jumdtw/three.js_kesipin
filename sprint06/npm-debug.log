@@ -13,7 +13,7 @@
 4 verbose stack     at ReadFileContext.callback (/usr/share/npm/node_modules/graceful-fs/graceful-fs.js:76:16)
 4 verbose stack     at FSReqWrap.readFileAfterOpen [as oncomplete] (fs.js:420:13)
 5 verbose cwd /home/jumdtw/WEB/kogakuin_web/team07/sprint06
-6 error Linux 4.15.0-42-generic
+6 error Linux 4.15.0-43-generic
 7 error argv "/usr/bin/node" "/usr/bin/npm" "start"
 8 error node v8.10.0
 9 error npm  v3.5.2
