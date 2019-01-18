@@ -168,22 +168,35 @@ $("#start-button").on('click', gameStart);
 //キーイベント
 let movement = {};
 $(document).on('keydown keyup', (event) => {
+    //L
+    if(event.keyCode===76){
+        socket.emit('shoot',myplayerId);
+    }
+    
     //D
     if(event.keyCode===68){
         movement.right = true;
-    }else{
-        movement.right = false;
     }
 
     //A
     if(event.keyCode===65){
         movement.left = true;
-    }else{
-        movement.left = false;
     }
 
     socket.emit('movement', movement,myplayerId);
+});
 
+$(document).on('keyup', (event) => {
+    //D
+    if(event.keyCode===68){
+        movement.right = false;
+    }
+
+    //A
+    if(event.keyCode===65){
+        movement.left = false;
+    }
+    socket.emit('movement', movement,myplayerId);
 });
 
 
@@ -192,11 +205,11 @@ socket.on('state', function(players,Numroom) {
     if(numroom === Numroom){
         // position graphical object on physical object recursively
         Object.values(players).forEach((cannon_player)=>{
-            player_list[cannon_player.id].angle = cannon_player.angle
-            player_list[cannon_player.id].body.position.copy(cannon_player.position);
-            player_list[cannon_player.id].body.quaternion.copy(cannon_player.quaternion);
+            let kesigomu = player_list[cannon_player.id];
+            kesigomu.angle = cannon_player.angle
+            kesigomu.body.position.copy(cannon_player.position);
+            kesigomu.body.quaternion.copy(cannon_player.quaternion);
             drawangle(cannon_player);
-
         });
         // render graphical object
         //Table.position.copy(Table.position);
@@ -289,13 +302,14 @@ socket.on('yourID',function(ID,Numroom){
 
 socket.on('addPlayer',function(players,Numroom){
     if(Numroom===numroom){
-        console.log(players);
         Object.values(players).forEach((player)=>{
             player_list[player.id] = {}
             player_list[player.id].body = createShape(0,30+TABLE_HIEGHT,0,1,0.7,2);
             player_list[player.id].angle = Math.PI/2;
             player_list[player.id].line = createline(player);
             player_list[player.id].cone = createcone(player);
+            player_list[player.id].sphere = null;
+            player_list[player.id].sphere = 0;
             scene.add(player_list[player.id].body);
             scene.add(player_list[player.id].line);
             scene.add(player_list[player.id].cone);
@@ -344,7 +358,6 @@ socket.on('now_menber',function(menber,Numroom){
 //誰のturnか知らせる。
 socket.on('Alert_turn',function(player,Numroom){
     if(numroom===Numroom){
-        console.log('aaa');
         if(player.socketId!=socket.id){
             lists = document.getElementById('alert_turn');
             broccoli = lists.lastElementChild;

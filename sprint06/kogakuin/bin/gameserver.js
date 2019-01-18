@@ -75,11 +75,35 @@ class Player extends GameObject {
     this.rigidBody = createShape(0,30+TABLE_HIEGHT,0,1,0.7,2,10);
     this.angle = Math.PI/2;
     this.movement = {};
+    this.sphere = null;
+    this.sphere_time = 0;
+    this.moveFlag = false;
   }
 
-  addF() {
+  addF(world) {
     if(this.moveFlag === false){
-      
+      let ball_material,Sphere,shape,power,Vx,Vz;
+      let Time = 0;
+      power = 5;
+      let v0 = 10;
+      Vx = v0 * Math.cos(this.angle);
+      Vz = v0 * Math.sin(this.angle);
+      //table マテリアル
+      ball_material = new CANNON.Material('ball_material');
+      ball_material.friction = 0.01;　//摩擦係数
+      ball_material.restitution = 0.01; //反発係数
+
+      shape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
+      Sphere = new CANNON.Body({mass: 10});
+      Sphere.material = ball_material;
+      Sphere.addShape(shape);
+      Sphere.position.x = this.rigidBody.position.x + 3*Math.cos(this.angle - Math.PI);
+      Sphere.position.y = this.rigidBody.position.y - 0.3;
+      Sphere.position.z = this.rigidBody.position.z + 3*Math.sin(this.angle + Math.PI);
+      Sphere.velocity.set(power*Vx,0,power*Vz)
+      this.sphere_time = Time;
+      this.sphere = Sphere;
+      world.add(Sphere);
     }
   }
 
@@ -131,6 +155,15 @@ class Main_Game {
           }
 
           this.rigid_list[player.id].angle = player.angle;
+
+          if(player.sphere!=null){
+            player.sphere_time = player.sphere_time + TIME_STEP;
+            if(player.sphere_time>=TIME_STEP*5){
+                player.sphere_time = 0;
+                this.world.remove(player.sphere);
+                player.sphere = null;
+            }
+          }
 
           if(Object.keys(this.player_list).length===1){
             Object.values(this.player_list).forEach((player) => {io.sockets.emit('winer',player,this.numroom)});
@@ -218,7 +251,7 @@ function createTable(){
 
   //table マテリアル
   table_material = new CANNON.Material('table_material');
-  table_material.friction = 0.07;　//摩擦係数
+  table_material.friction = 0.06;　//摩擦係数
   //table_material.restitution = 0.2; //反発係数
   // initialize rigid body
   //公式ドキュメントにもhalfelementsって書いてあるので幅　高さ　奥行きの半分を与える。多分物理演算のために半分になってる
@@ -281,7 +314,9 @@ function onConnection(socket) {
   socket.on('shoot', function(playerId){
     Object.values(roomN.player_list).forEach((player) => {
       if(player.id === playerId){
-        player.addF();
+        if(player.sphere===null){
+          player.addF(roomN.world);
+        }
       }
     });
   });
@@ -304,7 +339,7 @@ function createShape(x,y,z,w,h,d,mass) {
   var shape, body, kesigomu_material;
   //table マテリアル このマテリアルがないと反発係数がつかない
   kesigomu_material = new CANNON.Material('kesigomu_material');
-  kesigomu_material.friction = 0.3; //摩擦係数
+  kesigomu_material.friction = 0.25; //摩擦係数
   kesigomu_material.restitution = 0.7; //反発係数
   // initialize rigid body
   //公式ドキュメントにもhalfelementsって書いてあるので幅　高さ　奥行きの半分を与える。多分物理演算のために半分になってる
