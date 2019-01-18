@@ -10,7 +10,7 @@ var SCREEN_WIDTH = 465;
 var SCREEN_HEIGHT = 465;
 var VIEW_ANGLE = 60;
 const TABLE_HIEGHT = 70;
-var world, camera, scene, renderer, rendererElement, Mycanvas, axis, Table;
+var camera, scene, renderer,Table;
 var controls;
 var l = [[1,1],[1,-1],[-1,1],[-1,-1]];
 var player_list = {};
@@ -164,27 +164,26 @@ function gameStart(){
 
 $("#start-button").on('click', gameStart);
 
+
 //キーイベント
 let movement = {};
 $(document).on('keydown keyup', (event) => {
-    const KeyToCommand = {
-        'ArrowUp': 'forward',
-        'ArrowDown': 'back',
-        'ArrowLeft': 'left',
-        'ArrowRight': 'right',
-    };
-    const command = KeyToCommand[event.key];
-    if(command){
-        if(event.type === 'keydown'){
-            movement[command] = true;
-        }else{ /* keyup */
-            movement[command] = false;
-        }
-        socket.emit('movement', movement,myplayerId);
+    //D
+    if(event.keyCode===68){
+        movement.right = true;
+    }else{
+        movement.right = false;
     }
-    if(event.key === ' ' && event.type === 'keydown'){
-        socket.emit('shoot',myplayerId);
+
+    //A
+    if(event.keyCode===65){
+        movement.left = true;
+    }else{
+        movement.left = false;
     }
+
+    socket.emit('movement', movement,myplayerId);
+
 });
 
 
@@ -193,12 +192,14 @@ socket.on('state', function(players,Numroom) {
     if(numroom === Numroom){
         // position graphical object on physical object recursively
         Object.values(players).forEach((cannon_player)=>{
-            player_list[cannon_player.id].position.copy(cannon_player.position);
-            player_list[cannon_player.id].quaternion.copy(cannon_player.quaternion);
+            player_list[cannon_player.id].angle = cannon_player.angle
+            player_list[cannon_player.id].body.position.copy(cannon_player.position);
+            player_list[cannon_player.id].body.quaternion.copy(cannon_player.quaternion);
+            drawangle(cannon_player);
+
         });
         // render graphical object
-        Table.position.copy(Table.position);
-
+        //Table.position.copy(Table.position);
         renderer.render(scene, camera);
         camera.lookAt(new THREE.Vector3(0,80+TABLE_HIEGHT,0));
         controls.update();
@@ -206,26 +207,50 @@ socket.on('state', function(players,Numroom) {
 
 });
 
-function createShape(x,y,z,w,h,d,mass,id) {
-    var geometry, materials, mesh;
-    let color = 0xFFFFFF;
-    // initialize Object3D
-    //geometry = new THREE.SphereGeometry(w, 10, 10);
-    //幅　高さ　奥行き
-    //geometry = new THREE.CubeGeometry(w*2, h*2, d*2);
-    geometry = new THREE.BoxGeometry(w*2, h*2, d*2);
-    materials = [
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 1.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 2.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 3.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 4.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 5.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)})  // 6.png
-    ];
-  
-    mesh = new THREE.Mesh(geometry, materials);
-    return mesh;
+
+function drawangle(player){
+    kesigomu = player_list[player.id];
+    scene.remove(kesigomu.line);
+    scene.remove(kesigomu.cone);
+    player.line = createline(player);
+    player.cone = createcone(player);
+    scene.add(kesigomu.line);
+    scene.add(kesigomu.cone);
 }
+
+function createline(player){
+    let material,geometry,Vx,Vz,kesigomu,line;
+    material = new THREE.LineBasicMaterial({color:0x800080,linewidth: 6});
+    geometry = new THREE.Geometry();
+    kesigomu = player_list[player.id];
+    Vx = Math.cos(kesigomu.angle) * 4 + kesigomu.body.position.x;
+    Vz = Math.sin(kesigomu.angle) * 4 + kesigomu.body.position.z;
+    geometry.vertices.push(
+        new THREE.Vector3(kesigomu.body.position.x,kesigomu.body.position.y,kesigomu.body.position.z),
+        new THREE.Vector3(Vx,kesigomu.body.position.y,Vz),
+    );
+    line = new THREE.Line(geometry,material);
+    player_list[player.id].line = line;
+    return line;
+}
+
+function createcone(player){
+    let material,geometry,Vx,Vz,kesigomu,cone;
+    geometry = new THREE.ConeGeometry(0.4,1,20);
+    material = new THREE.MeshBasicMaterial({color:0x800080});
+    kesigomu = player_list[player.id];
+    Vx = Math.cos(kesigomu.angle) * 4 + kesigomu.body.position.x;
+    Vz = Math.sin(kesigomu.angle) * 4 + kesigomu.body.position.z;
+    cone = new THREE.Mesh(geometry,material);
+    cone.position.x = Vx;
+    cone.position.y = kesigomu.body.position.y;
+    cone.position.z = Vz;
+    cone.rotation.x = Math.PI/2;
+    cone.rotation.z = player_list[player.id].angle - Math.PI/2;
+    player_list[player.id].cone = cone;
+    return cone;
+}
+
 
 //socket 
 
@@ -264,12 +289,40 @@ socket.on('yourID',function(ID,Numroom){
 
 socket.on('addPlayer',function(players,Numroom){
     if(Numroom===numroom){
+        console.log(players);
         Object.values(players).forEach((player)=>{
-            player_list[player.id] = createShape(0,30+TABLE_HIEGHT,0,1,0.7,2);
-            scene.add(player_list[player.id]);
+            player_list[player.id] = {}
+            player_list[player.id].body = createShape(0,30+TABLE_HIEGHT,0,1,0.7,2);
+            player_list[player.id].angle = Math.PI/2;
+            player_list[player.id].line = createline(player);
+            player_list[player.id].cone = createcone(player);
+            scene.add(player_list[player.id].body);
+            scene.add(player_list[player.id].line);
+            scene.add(player_list[player.id].cone);
         });
     }
 });
+
+function createShape(x,y,z,w,h,d,mass,id) {
+    var geometry, materials, mesh;
+    let color = 0xFFFFFF;
+    // initialize Object3D
+    //geometry = new THREE.SphereGeometry(w, 10, 10);
+    //幅　高さ　奥行き
+    //geometry = new THREE.CubeGeometry(w*2, h*2, d*2);
+    geometry = new THREE.BoxGeometry(w*2, h*2, d*2);
+    materials = [
+        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 1.png
+        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 2.png
+        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 3.png
+        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 4.png
+        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 5.png
+        new THREE.MeshStandardMaterial({color: Math.round(color)})  // 6.png
+    ];
+  
+    mesh = new THREE.Mesh(geometry, materials);
+    return mesh;
+}
 
 //現状の人数
 let pastmenber = 0;

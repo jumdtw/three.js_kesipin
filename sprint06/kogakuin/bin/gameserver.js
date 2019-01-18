@@ -75,39 +75,6 @@ class Player extends GameObject {
     this.rigidBody = createShape(0,30+TABLE_HIEGHT,0,1,0.7,2,10);
     this.angle = Math.PI/2;
     this.movement = {};
-    /*
-    this.health = this.maxHealth = 10
-    this.width = 40;
-    this.height = 40;
-    this.bullets = {};
-    this.point = 0;
-    
-    //速度ベクトル
-    this.vx = 0;
-    this.vy = 0;
-    this.px = 0;
-    this.py = 0;
-    // 加速度
-    this.a = 12.0;
-    //消しゴムとしての尊厳を守るためのFlag
-    this.moveFlag = false;
-    //質量
-    this.m = 1;
-    //進む向き
-    this.move_angle;
-    //与える速度
-    this.v0 = 0;
-    //自分のturn以外は動かないようにする
-    this.turnFlag = false;
-    this.moveFlag = false;
-    //部屋番号
-    this.roomNUM;
-
-
-    this.x = Math.random() * (FWIDTH - this.width);
-    this.y = Math.random() * (FHEIGHT - this.height);
-    this.angle = Math.random() * 2 * Math.PI;
-    */
   }
 
   addF() {
@@ -163,6 +130,8 @@ class Main_Game {
             player.angle += 0.05;
           }
 
+          this.rigid_list[player.id].angle = player.angle;
+
           if(Object.keys(this.player_list).length===1){
             Object.values(this.player_list).forEach((player) => {io.sockets.emit('winer',player,this.numroom)});
             this.GameStartFlag = 2;
@@ -192,6 +161,7 @@ class Main_Game {
       this.rigid_list[player.id].id = player.id;
       this.rigid_list[player.id].position = this.player_list[player.id].rigidBody.position;
       this.rigid_list[player.id].quaternion = this.player_list[player.id].rigidBody.quaternion;
+      this.rigid_list[player.id].angle = this.player_list[player.id].angle;
     });
   }
 
