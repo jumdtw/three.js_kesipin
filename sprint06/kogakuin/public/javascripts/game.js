@@ -15,6 +15,23 @@ var controls;
 var l = [[1,1],[1,-1],[-1,1],[-1,-1]];
 var player_list = {};
 
+var my_materials = [
+    new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/own_left.png')}), // left
+    new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/own_right.png')}), // right
+    new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/own_top.png')}), // top
+    new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/own_bottom.png')}), // bottom
+    new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/kesigomu_front_back.png')}), // front
+    new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/kesigomu_front_back.png')})  // back
+];
+var enemy_materials = [
+    new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/enemy_left.png')}), // left
+    new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/enemy_right.png')}), // right
+    new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/enemy_top.png')}), // top
+    new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/enemy_bottom.png')}), // bottom
+    new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/kesigomu_front_back.png')}), // front
+    new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/kesigomu_front_back.png')})  // back
+];
+
 window.onload = function(){
     init();
     numroom = parseFloat(localStorage.getItem('roomNum'));
@@ -213,8 +230,8 @@ socket.on('state', function(players,Numroom) {
         });
         // render graphical object
         //Table.position.copy(Table.position);
+        camera.lookAt(new THREE.Vector3(0,Table.position.y,0));
         renderer.render(scene, camera);
-        camera.lookAt(new THREE.Vector3(0,80+TABLE_HIEGHT,0));
         controls.update();
     }
 
@@ -304,7 +321,11 @@ socket.on('addPlayer',function(players,Numroom){
     if(Numroom===numroom){
         Object.values(players).forEach((player)=>{
             player_list[player.id] = {}
-            player_list[player.id].body = createShape(0,30+TABLE_HIEGHT,0,1,0.7,2);
+            if(player.id===myplayerId){
+                player_list[player.id].body = createShape(1,0.7,2,1);
+            }else{
+                player_list[player.id].body = createShape(1,0.7,2,0);
+            }
             player_list[player.id].angle = Math.PI/2;
             player_list[player.id].line = createline(player);
             player_list[player.id].cone = createcone(player);
@@ -317,7 +338,7 @@ socket.on('addPlayer',function(players,Numroom){
     }
 });
 
-function createShape(x,y,z,w,h,d,mass,id) {
+function createShape(w,h,d,flag) {
     var geometry, materials, mesh;
     let color = 0xFFFFFF;
     // initialize Object3D
@@ -325,14 +346,14 @@ function createShape(x,y,z,w,h,d,mass,id) {
     //幅　高さ　奥行き
     //geometry = new THREE.CubeGeometry(w*2, h*2, d*2);
     geometry = new THREE.BoxGeometry(w*2, h*2, d*2);
-    materials = [
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 1.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 2.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 3.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 4.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 5.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)})  // 6.png
-    ];
+    
+    var materials = null;
+    if(flag){
+        var materials = my_materials;
+    }else{
+        var materials = enemy_materials;
+    }
+    
   
     mesh = new THREE.Mesh(geometry, materials);
     return mesh;
