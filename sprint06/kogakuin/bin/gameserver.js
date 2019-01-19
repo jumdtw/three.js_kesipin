@@ -22,7 +22,8 @@ const dt = 0.1;
 //反発係数
 const e = 0.2;
 
-var room_list = [];
+  var room_list = {};
+var room_baf = {};
 var playing_room = [false,false,false,false,false,false];
 
 
@@ -76,6 +77,8 @@ class Player extends GameObject {
     //打ち出す角度
     this.angle = Math.PI/2;
     this.movement = {};
+    //打ち出す力
+    this.power = 4;
     //消しゴムを押し出す小物体用
     this.sphere = null;
     this.sphere_time = 0;
@@ -91,7 +94,7 @@ class Player extends GameObject {
     if(this.moveFlag === false){
       let ball_material,Sphere,shape,power,Vx,Vz;
       let Time = 0;
-      power = 5;
+      power = 3;
       let v0 = 10;
       Vx = v0 * Math.cos(this.angle);
       Vz = v0 * Math.sin(this.angle);
@@ -145,6 +148,8 @@ class Main_Game {
     this.echoFlag = false;
     //卓上　残留人数
     this.num_player = 0;
+    //ゲーム終了
+    this.endTimer = 0;
     this.table = createTable();
     this.world = new CANNON.World();
     this.world.gravity.set(0, -9.82, 0);
@@ -166,7 +171,18 @@ class Main_Game {
           if (movement.right) {
             player.angle += 0.05;
           }
-
+          if(movement.up){
+            player.power = player.power + 1;
+            if(player.power >= 6){
+              player.power = 3;
+            }
+          }
+          if(movement.bottom){
+            player.power = player.power - 1;
+            if(player.power <= 2){
+              player.power = 5;
+            }
+          }
           this.rigid_list[player.id].angle = player.angle;
 
           if(player.sphere!=null&&player.loserFlag===false){
@@ -202,7 +218,7 @@ class Main_Game {
         }
       }
       if(this.GameStartFlag===1){
-        if(this.num_player==2){
+        if(((Object.keys(this.player_list).length)-(this.num_player))<=1){
           Object.values(this.player_list).forEach((player) => {
             if(!player.loserFlag){
               io.to(player.socketId).emit('winer',player,this.numroom)
@@ -212,6 +228,13 @@ class Main_Game {
         }else{
           this.num_player = 0;
         } 
+      }
+
+      if(this.GameStartFlag===2){
+        this.endTimer = this.endTimer + TIME_STEP;
+        if(this.endTimer >= TIME_STEP * 30 * 15){
+          end_MainGame(this.numroom);
+        }
       }
 
       
@@ -231,8 +254,9 @@ class Main_Game {
   connection_judge(){
     Object.values(this.player_list).forEach((player) =>{
       if(player.disconnectionFlag){
+        this.world.remove(this.player_list[player.id].rigidBody);
         delete this.player_list[player.id];
-        delete this.rigid_list[player.id];
+        this.rigid_list[player.id].exit = true;
       }else{
         player.disconnectionFlag = true;
       }
@@ -246,6 +270,7 @@ class Main_Game {
       this.rigid_list[player.id].position = this.player_list[player.id].rigidBody.position;
       this.rigid_list[player.id].quaternion = this.player_list[player.id].rigidBody.quaternion;
       this.rigid_list[player.id].angle = this.player_list[player.id].angle;
+      this.rigid_list[player.id].exit = false;
     });
   }
 
@@ -324,15 +349,10 @@ io.on('connection', onConnection);
 function onConnection(socket) {
   //roomがなかった場合roomを作成し、socketを開放する。
   socket.on('createGame', function (Numroom) {
-    let flag = true;
-    for(let i=0;i<room_list.length;i++){
-      if(room_list[i] === Numroom){
-        flag = false;
-      }
-    }
-    if(flag){
-      room_list.push(Numroom);
-      roomN = new Main_Game(Numroom); 
+    if(room_list[Numroom]===false||room_list[Numroom]===undefined){
+      room_list[Numroom] = true;
+      roomN = new Main_Game(Numroom);
+      room_baf[Numroom] = roomN; 
       console.log('connect succesfull room');
     }
   });
@@ -360,6 +380,8 @@ function onConnection(socket) {
       }else{
         io.to(socket.id).emit('over_menber',Numroom);
       }
+    }else{
+      io.to(socket.id).emit('over_menber',Numroom);
     }
   });
 
@@ -385,11 +407,17 @@ function onConnection(socket) {
 
   socket.on('Ack',function(playerId){
     roomN.player_list[playerId].disconnectionFlag = false;
-  })
+  });
 
+  socket.on('remove_body',function(playerId){
+    delete roomN.rigid_list[playerId]
+  })
 }
 
-
+function end_MainGame(Numroom){
+  delete room_baf[Numroom];
+  room_list[Numroom] = false;
+}
 
 function createShape(x,y,z,w,h,d,mass) {
   var shape, body, kesigomu_material;

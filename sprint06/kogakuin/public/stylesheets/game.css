@@ -114,3 +114,8 @@ a:hover{
   vertical-align: middle;
   padding: 400px 0px 0px 0px;
 }
+
+#before_num{
+  align-items: center;
+  position: absolute;
+}

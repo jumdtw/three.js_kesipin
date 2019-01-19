@@ -19,7 +19,6 @@ function room_2(){
     window.location.href='/game.html';
     save_Storage(num);
     socket.emit('createGame',2);
-    console.log('emit roomnum')
 }
 function room_3(){
     num = 3;
@@ -51,7 +50,6 @@ function save_Storage(num){
         // ローカルストレージが使える
         localStorage.setItem("roomNum",num);
     } else {
-        // 使えない。。。
         console.log('err storage');
         return -1;
     }

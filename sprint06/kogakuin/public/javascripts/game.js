@@ -1,9 +1,8 @@
-
 const socket = io();
 const radius = 40
 
 var numroom = -1;
-let myplayerId = -1;
+var myplayerId = -1;
 
 var TIME_STEP = 1 / 30;
 var SCREEN_WIDTH = 465;
@@ -200,6 +199,16 @@ $(document).on('keydown keyup', (event) => {
         movement.left = true;
     }
 
+    //W
+    if(event.keyCode===68){
+        movement.up = true;
+    }
+
+    //X
+    if(event.keyCode===68){
+        movement.bottom = true;
+    }
+
     socket.emit('movement', movement,myplayerId);
 });
 
@@ -213,6 +222,16 @@ $(document).on('keyup', (event) => {
     if(event.keyCode===65){
         movement.left = false;
     }
+
+    //W
+    if(event.keyCode===68){
+        movement.up = false;
+    }
+
+    //X
+    if(event.keyCode===68){
+        movement.bottom = false;
+    }
     socket.emit('movement', movement,myplayerId);
 });
 
@@ -223,6 +242,12 @@ socket.on('state', function(players,Numroom) {
         // position graphical object on physical object recursively
         Object.values(players).forEach((cannon_player)=>{
             let kesigomu = player_list[cannon_player.id];
+            if(cannon_player.exit===true){
+                scene.remove(kesigomu.line);
+                scene.remove(kesigomu.cone);
+                scene.remove(kesigomu.body);
+                socket.emit('remove_body',cannon_player.id);
+            }
             kesigomu.angle = cannon_player.angle
             kesigomu.body.position.copy(cannon_player.position);
             kesigomu.body.quaternion.copy(cannon_player.quaternion);
@@ -239,13 +264,15 @@ socket.on('state', function(players,Numroom) {
 
 
 function drawangle(player){
-    kesigomu = player_list[player.id];
-    scene.remove(kesigomu.line);
-    scene.remove(kesigomu.cone);
-    player.line = createline(player);
-    player.cone = createcone(player);
-    scene.add(kesigomu.line);
-    scene.add(kesigomu.cone);
+    if(player.exit!==true){
+        kesigomu = player_list[player.id];
+        scene.remove(kesigomu.line);
+        scene.remove(kesigomu.cone);
+        player.line = createline(player);
+        player.cone = createcone(player);
+        scene.add(kesigomu.line);
+        scene.add(kesigomu.cone);
+    }
 }
 
 function createline(player){
