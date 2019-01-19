@@ -73,11 +73,18 @@ class Player extends GameObject {
     this.socketId = obj.socketId;
     this.nickname = obj.nickname;
     this.rigidBody = createShape(0,30+TABLE_HIEGHT,0,1,0.7,2,10);
+    //打ち出す角度
     this.angle = Math.PI/2;
     this.movement = {};
+    //消しゴムを押し出す小物体用
     this.sphere = null;
     this.sphere_time = 0;
+    //turn制御用
     this.moveFlag = false;
+    //負けか否か
+    this.loserFlag = false;
+    //疎通確認用
+    this.disconnectionFlag = true;
   }
 
   addF(world) {
@@ -131,7 +138,13 @@ class Main_Game {
     this.player_list = {};
     this.rigid_list = {};
     this.numroom = Numroom;
+    //ゲーム状態の保持用
     this.GameStartFlag = 0;
+    //疎通確認用
+    this.echoTime = 0;
+    this.echoFlag = false;
+    //卓上　残留人数
+    this.num_player = 0;
     this.table = createTable();
     this.world = new CANNON.World();
     this.world.gravity.set(0, -9.82, 0);
@@ -156,7 +169,7 @@ class Main_Game {
 
           this.rigid_list[player.id].angle = player.angle;
 
-          if(player.sphere!=null){
+          if(player.sphere!=null&&player.loserFlag===false){
             player.sphere_time = player.sphere_time + TIME_STEP;
             if(player.sphere_time>=TIME_STEP*5){
                 player.sphere_time = 0;
@@ -165,27 +178,65 @@ class Main_Game {
             }
           }
 
-          if(Object.keys(this.player_list).length===1){
-            Object.values(this.player_list).forEach((player) => {io.sockets.emit('winer',player,this.numroom)});
-            this.GameStartFlag = 2;
-          } 
-          io.sockets.emit('state', this.rigid_list,this.numroom);
+          this.out_judge(player);
+          if(player.loserFlag){
+            this.num_player = this.num_player + 1;
+          }
         }else if(this.GameStartFlag === 0){
           io.sockets.emit('now_menber',Object.keys(this.player_list).length,this.numroom)
         }
       });
+      if(this.GameStartFlag!=0){
+        io.sockets.emit('state', this.rigid_list,this.numroom);
+        //疎通確認
+        this.echoTime = this.echoTime + TIME_STEP;
+        if(this.echoTime > TIME_STEP * 30 * 3&&this.echoFlag===false){
+          this.echoFlag = true;
+          io.sockets.emit('Syc',this.numroom);
+        }
+        //すぐ返答がこない可能性があるので２秒インターバルをおく
+        if(this.echoTime > TIME_STEP * 30 * 5&&this.echoFlag===true){
+          this.echoFlag = false;
+          this.echoTime = 0;
+          this.connection_judge();
+        }
+      }
+      if(this.GameStartFlag===1){
+        if(this.num_player==2){
+          Object.values(this.player_list).forEach((player) => {
+            if(!player.loserFlag){
+              io.to(player.socketId).emit('winer',player,this.numroom)
+            }
+          });
+          this.GameStartFlag = 2;
+        }else{
+          this.num_player = 0;
+        } 
+      }
+
+      
     }, 1000 / 30);//setInterval
 
   }
 
   
 
-  out_judge(player,Numroom,player_list){
-    if(player.x <0 || player.x >1000 || player.y < 0 || player.y >1000){
-      io.to(player.socketId).emit('dead',Numroom);
-      player.remove(player_list);
+  out_judge(player){
+    if(player.rigidBody.position.y <= TABLE_HIEGHT/2&&this.player_list[player.id].loserFlag===false){
+        this.player_list[player.id].loserFlag = true;
+        io.to(player.socketId).emit('dead',this.numroom)
     }
-    return player_list;
+  }
+
+  connection_judge(){
+    Object.values(this.player_list).forEach((player) =>{
+      if(player.disconnectionFlag){
+        delete this.player_list[player.id];
+        delete this.rigid_list[player.id];
+      }else{
+        player.disconnectionFlag = true;
+      }
+    });
   }
 
   set_rigid_list(){
@@ -295,7 +346,8 @@ function onConnection(socket) {
         });
         roomN.player_list[player.id] = player;
         roomN.world.add(player.rigidBody);
-        io.sockets.emit('yourID',player.id,Numroom);
+        //io.sockets.emit('yourID',player.id,Numroom);
+        io.to(socket.id).emit('yourID',player.id,Numroom);
         if(Object.keys(roomN.player_list).length === 3){
           playing_room[Numroom] = true;
           io.sockets.emit('addPlayer',roomN.player_list,Numroom);
@@ -330,6 +382,10 @@ function onConnection(socket) {
       }
     });
   });
+
+  socket.on('Ack',function(playerId){
+    roomN.player_list[playerId].disconnectionFlag = false;
+  })
 
 }
 
@@ -369,3 +425,7 @@ app.get('/', (req, res) => {
 server.listen(PORT, function () {
   console.log('port 3000')
 });
+
+
+
+

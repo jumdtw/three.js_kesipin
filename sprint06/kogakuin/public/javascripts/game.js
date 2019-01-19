@@ -317,6 +317,13 @@ socket.on('yourID',function(ID,Numroom){
     }
 });
 
+socket.on('Syc',function(Numroom){
+    if(Numroom===numroom){
+        console.log('echo');
+        socket.emit('Ack', myplayerId);
+    }
+});
+
 socket.on('addPlayer',function(players,Numroom){
     if(Numroom===numroom){
         Object.values(players).forEach((player)=>{
