@@ -166,14 +166,12 @@ class Main_Game {
               player.angle += 0.05;
             }
             if(movement.up){
-              console.log(player.power);
               player.power = player.power + 0.1;
               if(player.power > 6){
                 player.power = 3;
               }
             }
             if(movement.bottom){
-              console.log(player.power);
               player.power = player.power - 0.1;
               if(player.power <= 2){
                 player.power = 5;

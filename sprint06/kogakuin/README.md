@@ -12,6 +12,8 @@
 - 
 
 ## 参考文献
+
+### コーディング
 - http://www.toriho-dai.com/number/
 - https://paiza.hatenablog.com/entry/paizacloud_online_multiplayer_game
 - http://marupeke296.com/
@@ -58,6 +60,12 @@ three.js 公式
 socket.io doc
 - https://socket.io/docs/client-api/#io-url-options
 
+### 画層
 
+黒板
+- http://gahag.net/tag/%E9%BB%92%E6%9D%BF/
+
+床
+- https://www.photo-ac.com/main/search/?q=%E5%A3%81&srt=dlrank
 
 

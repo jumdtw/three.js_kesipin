@@ -88,7 +88,7 @@ function init(){
 // initialize lights
 function initLights() {
     var directionalLight, ambientLight, spotlight;
-    directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1);
+    directionalLight = new THREE.DirectionalLight(0xFFFFFF, 0.4);
     directionalLight.position.set(0, 50, 0);
     //directionalLight.castShadow = true;
     scene.add(directionalLight);
@@ -115,8 +115,8 @@ function createPlane() {
     Rotation = Math.PI/2;
     var loader = new THREE.TextureLoader();
     var texture = loader.load("../images/wood_texture.png");
-    //texture.wrapS   = texture.wrapT = THREE.RepeatWrapping;
-    //texture.repeat.set( 5, 5 );  
+    var yuka_texture = loader.load('../images/yuka.jpeg')
+    
     material = new THREE.MeshLambertMaterial( { color: 0x777777, map: texture } );
     geometry = new THREE.PlaneGeometry( w, h );
     
@@ -137,6 +137,7 @@ function createPlane() {
     }
 
     //床
+    material = new THREE.MeshLambertMaterial( { color: 0x777777, map: yuka_texture } );
     geometry = new THREE.PlaneGeometry(w,w);
     mesh = new THREE.Mesh(geometry,material);
     mesh.rotation.x = -Math.PI/2;
@@ -161,7 +162,8 @@ function createTable(){
     let w = 25;
     let h = 1;
     let d = 25;
-    let color = 0xDCAA6B;
+    let color = 0xdcdcdc;
+    let yoko_color = 0x792d00;
 
     // initialize Object3D
     //geometry = new THREE.SphereGeometry(w, 10, 10);
@@ -170,18 +172,29 @@ function createTable(){
     geometry = new THREE.BoxGeometry(w*2, h*2, d*2);
     //geometry = new THREE.BoxGeometry(1,1,1);
     materials = [
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 1.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 2.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 3.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 4.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)}), // 5.png
-        new THREE.MeshStandardMaterial({color: Math.round(color)})  // 6.png
+        new THREE.MeshStandardMaterial({color: Math.round(yoko_color)}), 
+        new THREE.MeshStandardMaterial({color: Math.round(yoko_color)}), 
+        new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/wood_texture.png')}), // top
+        new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('../images/wood_texture.png')}), // bottom
+        new THREE.MeshStandardMaterial({color: Math.round(yoko_color)}), 
+        new THREE.MeshStandardMaterial({color: Math.round(yoko_color)})  
     ];
 
+    
     Table = new THREE.Mesh(geometry, materials);
     Table.position.set(0,TABLE_HIEGHT,0);
     //Table.receiveShadow = true;
     scene.add(Table);
+
+    materials = [
+        new THREE.MeshStandardMaterial({color: Math.round(color)}), 
+        new THREE.MeshStandardMaterial({color: Math.round(color)}), 
+        new THREE.MeshStandardMaterial({color: Math.round(color)}), 
+        new THREE.MeshStandardMaterial({color: Math.round(color)}),
+        new THREE.MeshStandardMaterial({color: Math.round(color)}), 
+        new THREE.MeshStandardMaterial({color: Math.round(color)})  
+    ];
+
 
     geometry = new THREE.BoxGeometry(2,TABLE_HIEGHT,2);
     
