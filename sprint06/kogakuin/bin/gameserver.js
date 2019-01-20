@@ -16,11 +16,9 @@ var TIME_STEP = 1 / 30;
 
 const TABLE_HIEGHT = 70;
 
-
-//var roomN = {};
 var room_list = {};
 var room_baf = {};
-
+let Player_list = {};
 
 class GameObject {
   constructor(obj = {}) {
@@ -131,8 +129,8 @@ class Player extends GameObject {
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class Main_Game {
-  constructor(Numroom){
-    this.player_list = {};
+  constructor(Numroom,Player_list){
+    this.player_list = Player_list;
     this.rigid_list = {};
     this.numroom = Numroom;
     //ゲーム状態の保持用 0:menber参加待ち　1:ゲーム中　2:全ユーザーが出るのを待つ。10秒経つと自動的に3に移行する　3:新たにこのルームに人がくるのを待機する
@@ -155,86 +153,87 @@ class Main_Game {
    
     
     setInterval(()=>{
-      this.world.step(TIME_STEP);
-      Object.values(this.player_list).forEach((player) => {
-        if(this.GameStartFlag === 1){
-          const movement = player.movement;
-          if (movement.left) {
-            player.angle -= 0.05;
-          }
-          if (movement.right) {
-            player.angle += 0.05;
-          }
-          if(movement.up){
-            console.log(player.power);
-            player.power = player.power + 0.1;
-            if(player.power > 6){
-              player.power = 3;
+      if(this.GameStartFlag!==3){
+        this.world.step(TIME_STEP);
+        Object.values(this.player_list).forEach((player) => {
+          if(this.GameStartFlag === 1){
+            const movement = player.movement;
+            if (movement.left) {
+              player.angle -= 0.05;
             }
-          }
-          if(movement.bottom){
-            console.log(player.power);
-            player.power = player.power - 0.1;
-            if(player.power <= 2){
-              player.power = 5;
+            if (movement.right) {
+              player.angle += 0.05;
             }
-          }
-          this.rigid_list[player.id].angle = player.angle;
-          this.rigid_list[player.id].power = player.power;
+            if(movement.up){
+              console.log(player.power);
+              player.power = player.power + 0.1;
+              if(player.power > 6){
+                player.power = 3;
+              }
+            }
+            if(movement.bottom){
+              console.log(player.power);
+              player.power = player.power - 0.1;
+              if(player.power <= 2){
+                player.power = 5;
+              }
+            }
+            this.rigid_list[player.id].angle = player.angle;
+            this.rigid_list[player.id].power = player.power;
 
-          if(player.sphere!=null&&player.loserFlag===false){
-            player.sphere_time = player.sphere_time + TIME_STEP;
-            if(player.sphere_time>=TIME_STEP*5){
-                player.sphere_time = 0;
-                this.world.remove(player.sphere);
-                player.sphere = null;
+            if(player.sphere!=null&&player.loserFlag===false){
+              player.sphere_time = player.sphere_time + TIME_STEP;
+              if(player.sphere_time>=TIME_STEP*5){
+                  player.sphere_time = 0;
+                  this.world.remove(player.sphere);
+                  player.sphere = null;
+              }
             }
-          }
 
-          this.out_judge(player);
-          if(player.loserFlag){
-            this.num_player = this.num_player + 1;
+            this.out_judge(player);
+            if(player.loserFlag){
+              this.num_player = this.num_player + 1;
+            }
+          }else if(this.GameStartFlag === 0){
+            io.sockets.emit('now_menber',Object.keys(this.player_list).length,this.numroom)
           }
-        }else if(this.GameStartFlag === 0){
-          io.sockets.emit('now_menber',Object.keys(this.player_list).length,this.numroom)
+        });
+        if(this.GameStartFlag!=0){
+          io.sockets.emit('state', this.rigid_list,this.numroom);
+          //疎通確認
+          this.echoTime = this.echoTime + TIME_STEP;
+          if(this.echoTime > TIME_STEP * 30 * 3&&this.echoFlag===false){
+            this.echoFlag = true;
+            io.sockets.emit('Syc',this.numroom);
+          }
+          //すぐ返答がこない可能性があるので２秒インターバルをおく
+          if(this.echoTime > TIME_STEP * 30 * 5&&this.echoFlag===true){
+            this.echoFlag = false;
+            this.echoTime = 0;
+            this.connection_judge();
+          }
         }
-      });
-      if(this.GameStartFlag!=0){
-        io.sockets.emit('state', this.rigid_list,this.numroom);
-        //疎通確認
-        this.echoTime = this.echoTime + TIME_STEP;
-        if(this.echoTime > TIME_STEP * 30 * 3&&this.echoFlag===false){
-          this.echoFlag = true;
-          io.sockets.emit('Syc',this.numroom);
+        if(this.GameStartFlag===1){
+          if(((Object.keys(this.player_list).length)-(this.num_player))<=1){
+            Object.values(this.player_list).forEach((player) => {
+              if(!player.loserFlag){
+                io.to(player.socketId).emit('winer',player,this.numroom);
+              }
+            });
+            this.GameStartFlag = 2;
+          }else{
+            this.num_player = 0;
+          } 
         }
-        //すぐ返答がこない可能性があるので２秒インターバルをおく
-        if(this.echoTime > TIME_STEP * 30 * 5&&this.echoFlag===true){
-          this.echoFlag = false;
-          this.echoTime = 0;
-          this.connection_judge();
+
+        if(this.GameStartFlag===2){
+          this.endTimer = this.endTimer + TIME_STEP;
+          if(this.endTimer >= TIME_STEP * 30 * 10){
+            this.GameStartFlag = 3;
+            end_MainGame(this.numroom);
+          }
         }
       }
-      if(this.GameStartFlag===1){
-        if(((Object.keys(this.player_list).length)-(this.num_player))<=1){
-          Object.values(this.player_list).forEach((player) => {
-            if(!player.loserFlag){
-              io.to(player.socketId).emit('winer',player,this.numroom);
-            }
-          });
-          this.GameStartFlag = 2;
-        }else{
-          this.num_player = 0;
-        } 
-      }
-
-      if(this.GameStartFlag===2){
-        this.endTimer = this.endTimer + TIME_STEP;
-        if(this.endTimer >= TIME_STEP * 30 * 10){
-          this.GameStartFlag = 3;
-          end_MainGame(this.numroom);
-        }
-      }
-
       
     }, 1000 / 30);//setInterval
 
@@ -258,6 +257,13 @@ class Main_Game {
       }else{
         player.disconnectionFlag = true;
       }
+    });
+  }
+
+
+  set_world(){
+    Object.values(this.player_list).forEach((player) => {
+      this.world.add(player.rigidBody);
     });
   }
 
@@ -346,38 +352,49 @@ function createTable(){
 
 io.on('connection', onConnection);
 function onConnection(socket) {
-  console.log(socket.id);
-  //let roomN = {};
   //roomがなかった場合roomを作成し、socketを開放する。
   socket.on('createGame', function (Numroom) {
     console.log('createGame');
-    if(room_list[Numroom]===false||room_list[Numroom]===undefined){
-      room_list[Numroom] = true;
-      roomN = new Main_Game(Numroom);
-      room_baf[Numroom] = roomN; 
+    if(room_list[Numroom]===undefined){room_list[Numroom] = {};}
+    if(room_list[Numroom].flag===false||room_list[Numroom].flag===undefined){
+      room_list[Numroom].flag = true;
+      room_list[Numroom].number = Numroom;
       console.log('connect succesfull room');
     }
   });
 
   socket.on('game-start', function(config,Numroom) {
-    if(roomN.numroom === Numroom && (roomN.GameStartFlag===0||roomN.GameStartFlag===3)){
-      if(Object.keys(roomN.player_list).length < 3){
+    //if(room_list[Numroom].number === Numroom && (roomN.GameStartFlag===0||roomN.GameStartFlag===3)){
+    if(room_list[Numroom].number === Numroom){
+      if(Player_list[Numroom] === undefined){Player_list[Numroom]={};}
+      if(Object.keys(Player_list[Numroom]).length < 3 || Object.keys(Player_list[Numroom]).length===undefined){
+        if(Object.keys(Player_list[Numroom]).length===0 || Object.keys(Player_list[Numroom]).length===undefined){Player_list[Numroom] = {};}
         player = new Player({
           socketId: socket.id,
           nickname: config.nickname,
         });
-        roomN.player_list[player.id] = player;
-        roomN.world.add(player.rigidBody);
+        Player_list[Numroom][player.id] = player;
+        //roomN.player_list[player.id] = player;
+        //roomN.world.add(player.rigidBody);
+        Object.values(Player_list).forEach((player)=>{
+          console.log('nowmenber');
+          io.to(player.socketId).emit('now_menber',Object.keys(Player_list).length,Numroom)
+        })
         io.to(socket.id).emit('yourID',player.id,Numroom);
-        if(Object.keys(roomN.player_list).length === 3){
+        if(Object.keys(Player_list[Numroom]).length === 3){
+          roomN = new Main_Game(Numroom,Player_list[Numroom]);
+          room_baf[Numroom] = roomN; 
           io.sockets.emit('addPlayer',roomN.player_list,Numroom);
           roomN.GameStartFlag = 1;
+          roomN.set_world();
           roomN.set_rigid_list();
-          io.sockets.emit('starting-game',Numroom);
+          Object.values(roomN.player_list).forEach((player)=>{
+            io.to(player.socketId).emit('starting-game',Numroom);
+          })
           //main game start
           //roomN.Main_Game_Start(Numroom);
         }
-      }else if(Object.keys(roomN.player_list).length >= 3){
+      }else if(Object.keys(Player_list[Numroom]).length >= 3){
         io.to(socket.id).emit('over_menber',Numroom);
       }
     }
@@ -394,13 +411,15 @@ function onConnection(socket) {
   });
 
   socket.on('movement', function (movement,playerId) {
-    Object.values(roomN.player_list).forEach((player) => {
-      if(roomN.GameStartFlag === 1){
-        if(player.id === playerId){
-          player.movement = movement;
+    if(roomN!==undefined){
+      Object.values(roomN.player_list).forEach((player) => {
+        if(roomN.GameStartFlag === 1){
+          if(player.id === playerId){
+            player.movement = movement;
+          }
         }
-      }
-    });
+      });
+    }
   });
 
   socket.on('Ack',function(playerId){
@@ -423,8 +442,10 @@ function onConnection(socket) {
 }
 
 function end_MainGame(Numroom){
+  roomN = undefined;
   room_baf[Numroom] = null;
-  room_list[Numroom] = false;
+  room_list[Numroom].flag = false;
+  Player_list[Numroom] = {};
   console.log('end-game');
 }
 
