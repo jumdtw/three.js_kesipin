@@ -18,7 +18,8 @@ const TABLE_HIEGHT = 70;
 
 var room_list = {};
 var room_baf = {};
-let Player_list = {};
+var Player_list = {};
+var playing_room = {};
 
 class GameObject {
   constructor(obj = {}) {
@@ -200,18 +201,6 @@ class Main_Game {
         });
         if(this.GameStartFlag!=0){
           io.sockets.emit('state', this.rigid_list,this.numroom);
-          //疎通確認
-          this.echoTime = this.echoTime + TIME_STEP;
-          if(this.echoTime > TIME_STEP * 30 * 3&&this.echoFlag===false){
-            this.echoFlag = true;
-            io.sockets.emit('Syc',this.numroom);
-          }
-          //すぐ返答がこない可能性があるので２秒インターバルをおく
-          if(this.echoTime > TIME_STEP * 30 * 5&&this.echoFlag===true){
-            this.echoFlag = false;
-            this.echoTime = 0;
-            this.connection_judge();
-          }
         }
         if(this.GameStartFlag===1){
           if(((Object.keys(this.player_list).length)-(this.num_player))<=1){
@@ -224,6 +213,19 @@ class Main_Game {
           }else{
             this.num_player = 0;
           } 
+
+          //疎通確認
+          this.echoTime = this.echoTime + TIME_STEP;
+          if(this.echoTime > TIME_STEP * 30 * 3&&this.echoFlag===false){
+            this.echoFlag = true;
+            io.sockets.emit('Syc',this.numroom);
+          }
+          //すぐ返答がこない可能性があるので２秒インターバルをおく
+          if(this.echoTime > TIME_STEP * 30 * 5&&this.echoFlag===true){
+            this.echoFlag = false;
+            this.echoTime = 0;
+            this.connection_judge();
+          }
         }
 
         if(this.GameStartFlag===2){
@@ -354,18 +356,18 @@ io.on('connection', onConnection);
 function onConnection(socket) {
   //roomがなかった場合roomを作成し、socketを開放する。
   socket.on('createGame', function (Numroom) {
-    console.log('createGame');
     if(room_list[Numroom]===undefined){room_list[Numroom] = {};}
     if(room_list[Numroom].flag===false||room_list[Numroom].flag===undefined){
       room_list[Numroom].flag = true;
+      room_baf[Numroom] = undefined;
+      playing_room[Numroom] = false;
       room_list[Numroom].number = Numroom;
       console.log('connect succesfull room');
     }
   });
 
   socket.on('game-start', function(config,Numroom) {
-    //if(room_list[Numroom].number === Numroom && (roomN.GameStartFlag===0||roomN.GameStartFlag===3)){
-    if(room_list[Numroom].number === Numroom){
+    //if(room_list[Numroom].number === Numroom){
       if(Player_list[Numroom] === undefined){Player_list[Numroom]={};}
       if(Object.keys(Player_list[Numroom]).length < 3 || Object.keys(Player_list[Numroom]).length===undefined){
         if(Object.keys(Player_list[Numroom]).length===0 || Object.keys(Player_list[Numroom]).length===undefined){Player_list[Numroom] = {};}
@@ -374,30 +376,30 @@ function onConnection(socket) {
           nickname: config.nickname,
         });
         Player_list[Numroom][player.id] = player;
-        //roomN.player_list[player.id] = player;
-        //roomN.world.add(player.rigidBody);
-        Object.values(Player_list).forEach((player)=>{
-          console.log('nowmenber');
-          io.to(player.socketId).emit('now_menber',Object.keys(Player_list).length,Numroom)
-        })
         io.to(socket.id).emit('yourID',player.id,Numroom);
+        Object.values(Player_list[Numroom]).forEach((player)=>{
+          io.to(player.socketId).emit('now_menber',Object.keys(Player_list[Numroom]).length,Numroom)
+        });
+        if(playing_room[Numroom]){
+          console.log('over');
+          io.to(socket.id).emit('over_menber',Numroom);
+        }
         if(Object.keys(Player_list[Numroom]).length === 3){
           roomN = new Main_Game(Numroom,Player_list[Numroom]);
+          playing_room[Numroom] = true;
           room_baf[Numroom] = roomN; 
           io.sockets.emit('addPlayer',roomN.player_list,Numroom);
-          roomN.GameStartFlag = 1;
           roomN.set_world();
           roomN.set_rigid_list();
+          roomN.GameStartFlag = 1;
           Object.values(roomN.player_list).forEach((player)=>{
             io.to(player.socketId).emit('starting-game',Numroom);
-          })
+          });
           //main game start
           //roomN.Main_Game_Start(Numroom);
         }
-      }else if(Object.keys(Player_list[Numroom]).length >= 3){
-        io.to(socket.id).emit('over_menber',Numroom);
       }
-    }
+    //}
   });
 
   socket.on('shoot', function(playerId){
@@ -443,7 +445,8 @@ function onConnection(socket) {
 
 function end_MainGame(Numroom){
   roomN = undefined;
-  room_baf[Numroom] = null;
+  playing_room[Numroom] = false;
+  room_baf[Numroom] = undefined;
   room_list[Numroom].flag = false;
   Player_list[Numroom] = {};
   console.log('end-game');

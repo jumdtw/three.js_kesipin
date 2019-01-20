@@ -47,7 +47,7 @@ window.addEventListener('resize', onResize);
 
 function onResize() {
   // サイズを取得
-  const width = window.innerWidth*0.85;
+  const width = window.innerWidth*0.80;
   const height = window.innerHeight;
 
   // レンダラーのサイズを調整する
@@ -65,7 +65,7 @@ function init(){
     renderer = new THREE.WebGLRenderer({
         canvas: document.querySelector("#mycanvas")
     })
-    renderer.setSize(window.innerWidth*0.85, window.innerHeight);
+    renderer.setSize(window.innerWidth*0.80, window.innerHeight);
     renderer.shadowMap.enabled = true;
 
     scene = new THREE.Scene();
@@ -428,6 +428,7 @@ function createShape(w,h,d,flag) {
 //現状の人数
 let pastmenber = 0;
 socket.on('now_menber',function(menber,Numroom){
+    console.log('now_menber');
     if(numroom===Numroom){
         if(menber!=pastmenber){
             lists = document.getElementById('before_num');

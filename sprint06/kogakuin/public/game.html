@@ -38,13 +38,6 @@
         </div>
       </div>
 
-      <div id="return_entry">
-        <div style="text-align: center; width: 100%; font-size: 100px;">
-          <p>再度接続してください</p>
-          <button type='button' class='btn btn-warning' style="font-size: xx-large;" id="return-menu"><a href='index.html'>メニューへ戻る</a></button>
-        </div>
-      </div>
-
       <div id='status'>
 
       </div>
@@ -85,7 +78,21 @@
         </div>
       </div>
 
-        <canvas id="mycanvas"></canvas>
+      <div id='user_table'>
+        <canvas id="mycanvas" class='user_table_cell'></canvas>
+
+        <div id='now-power' class='user_table_cell'>
+
+        </div>
+
+        <div id='operation' class='user_table_cell UI'>
+            <p>W: power　up</p><br />
+            <p>S: power　down</p><br />
+            <p>D,A: change　angle </p><br />
+            <p>L: shoot</p>
+        </div>
+      </div>
+
     </div>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
