@@ -1,5 +1,16 @@
 # team7 消しピン
 
+## 考えられるバグ
+- node.jsの使用がよくわかっていないが、通信終了後socketの削除していないっぽいので長期稼働させるといずれ処理重くなって止まるかも。
+
+
+## 解決したバグ
+- vscodeのせいなのかしらないが、コードの最上部に勝手に`import ~`が追加されることがあった。
+- socketでデータを送る際、親切にも要素のデータ量が多いと*勝手に*その要素を含まないデータを送るため、送る前と送った後ではデータが違うものになっていたことがあった。
+- `camera.lookAt`は`renderer.render`の前に実行しないと意味がない
+- javascriptにおけるdelete演算子はオブジェクトのプロパティしか消さないらしくオブジェクトそのものは消さないらしい。これのせいでroom生成がうまくいかなかった
+- 
+
 ## 参考文献
 - http://www.toriho-dai.com/number/
 - https://paiza.hatenablog.com/entry/paizacloud_online_multiplayer_game
@@ -40,4 +51,13 @@ add F
 
 three.js 公式  
 - https://threejs.org/ 
+
+画面resize
+- https://ics.media/tutorial-three/renderer_resize.html
+
+socket.io doc
+- https://socket.io/docs/client-api/#io-url-options
+
+
+
 

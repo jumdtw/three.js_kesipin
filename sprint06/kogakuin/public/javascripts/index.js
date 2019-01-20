@@ -1,5 +1,12 @@
-const socket = io();
+//var socket = io();
+//var socket = io.connect("localhost:3000", {'force new connection': true});
+//var socket = io.connect("http://localhost", {'force new connection': true});
+var socket = io('localhost:3000',{forceNew: true});
 
+window.onload = function(){
+    socket.on('reconnect');
+    localStorage.setItem("roomNum",-1);
+}
 
 let room1 = document.getElementById('1_room_button');
 let room2 = document.getElementById('2_room_button');
@@ -10,36 +17,44 @@ let room6 = document.getElementById('6_room_button');
 
 function room_1(){
     num = 1;
+    localStorage.setItem('socket',socket);
     location.href='/game.html';
-    save_Storage(num);
-    socket.emit('createGame',1);
+    save_Storage(num);    
+    if(socket.emit('createGame',1)){
+        console.log('emit');
+    };
 }
 function room_2(){
     num = 2;
+    localStorage.setItem('socket',socket);
     window.location.href='/game.html';
     save_Storage(num);
     socket.emit('createGame',2);
 }
 function room_3(){
     num = 3;
+    localStorage.setItem('socket',socket);
     window.location.href='/game.html';
     save_Storage(num);
     socket.emit('createGame',3);
 }
 function room_4(){
     num = 4;
+    localStorage.setItem('socket',socket);
     window.location.href='/game.html';
     save_Storage(num);
     socket.emit('createGame',4);
 }
 function room_5(){
     num = 5;
+    localStorage.setItem('socket',socket);
     window.location.href='/game.html';
     save_Storage(num);
     socket.emit('createGame',5);
 }
 function room_6(){
     num = 6;
+    localStorage.setItem('socket',socket);
     window.location.href='/game.html';
     save_Storage(num);
     socket.emit('createGame',6);

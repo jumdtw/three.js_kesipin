@@ -1,5 +1,8 @@
-const socket = io();
-const radius = 40
+//var socket = io();
+//var socket = io.connect("localhost:3000",{'force new connection': true});
+//var socket = io.connect("http://localhost", {'force new connection': true});
+var socket = io('localhost:3000',{forceNew: true});
+var radius = 40
 
 var numroom = -1;
 var myplayerId = -1;
@@ -32,8 +35,28 @@ var enemy_materials = [
 ];
 
 window.onload = function(){
+    //socket.id = localStorage.getItem('socket').id;
     init();
+    // 初期化のために実行
+    onResize();
     numroom = parseFloat(localStorage.getItem('roomNum'));
+}
+
+// リサイズイベント発生時に実行
+window.addEventListener('resize', onResize);
+
+function onResize() {
+  // サイズを取得
+  const width = window.innerWidth*0.85;
+  const height = window.innerHeight;
+
+  // レンダラーのサイズを調整する
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(width, height);
+
+  // カメラのアスペクト比を正す
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
 }
 
 
@@ -42,7 +65,7 @@ function init(){
     renderer = new THREE.WebGLRenderer({
         canvas: document.querySelector("#mycanvas")
     })
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth*0.85, window.innerHeight);
     renderer.shadowMap.enabled = true;
 
     scene = new THREE.Scene();
@@ -178,12 +201,21 @@ function gameStart(){
     $("#waitting-screen").show();
 }
 
-$("#start-button").on('click', gameStart);
+function clearLocalstorage(){
+    location.href='/index.html';
+    localStorage.clear();
+    //socket.emit('end-game');
+}
 
+$("#start-button").on('click', gameStart);
+$("#winer-button").on('click', clearLocalstorage);
+$("#loser-button").on('click', clearLocalstorage);
+$("#not_entry-button").on('click', clearLocalstorage);
 
 //キーイベント
 let movement = {};
-$(document).on('keydown keyup', (event) => {
+$(document).on('keydown', (event) => {
+    
     //L
     if(event.keyCode===76){
         socket.emit('shoot',myplayerId);
@@ -200,12 +232,12 @@ $(document).on('keydown keyup', (event) => {
     }
 
     //W
-    if(event.keyCode===68){
+    if(event.keyCode===87){
         movement.up = true;
     }
 
-    //X
-    if(event.keyCode===68){
+    //S
+    if(event.keyCode===83){
         movement.bottom = true;
     }
 
@@ -224,12 +256,13 @@ $(document).on('keyup', (event) => {
     }
 
     //W
-    if(event.keyCode===68){
+    if(event.keyCode===87){
         movement.up = false;
+
     }
 
-    //X
-    if(event.keyCode===68){
+    //S
+    if(event.keyCode===83){
         movement.bottom = false;
     }
     socket.emit('movement', movement,myplayerId);
@@ -259,7 +292,6 @@ socket.on('state', function(players,Numroom) {
         renderer.render(scene, camera);
         controls.update();
     }
-
 });
 
 
@@ -346,10 +378,10 @@ socket.on('yourID',function(ID,Numroom){
 
 socket.on('Syc',function(Numroom){
     if(Numroom===numroom){
-        console.log('echo');
         socket.emit('Ack', myplayerId);
     }
 });
+
 
 socket.on('addPlayer',function(players,Numroom){
     if(Numroom===numroom){

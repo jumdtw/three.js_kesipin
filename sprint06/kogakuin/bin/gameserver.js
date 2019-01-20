@@ -16,15 +16,10 @@ var TIME_STEP = 1 / 30;
 
 const TABLE_HIEGHT = 70;
 
-//時間差分
-const dt = 0.1;
 
-//反発係数
-const e = 0.2;
-
-  var room_list = {};
+//var roomN = {};
+var room_list = {};
 var room_baf = {};
-var playing_room = [false,false,false,false,false,false];
 
 
 class GameObject {
@@ -90,11 +85,10 @@ class Player extends GameObject {
     this.disconnectionFlag = true;
   }
 
-  addF(world) {
+  addF(world,player) {
     if(this.moveFlag === false){
-      let ball_material,Sphere,shape,power,Vx,Vz;
+      let ball_material,Sphere,shape,Vx,Vz;
       let Time = 0;
-      power = 3;
       let v0 = 10;
       Vx = v0 * Math.cos(this.angle);
       Vz = v0 * Math.sin(this.angle);
@@ -110,7 +104,7 @@ class Player extends GameObject {
       Sphere.position.x = this.rigidBody.position.x + 3*Math.cos(this.angle - Math.PI);
       Sphere.position.y = this.rigidBody.position.y - 0.3;
       Sphere.position.z = this.rigidBody.position.z + 3*Math.sin(this.angle + Math.PI);
-      Sphere.velocity.set(power*Vx,0,power*Vz)
+      Sphere.velocity.set(player.power*Vx,0,player.power*Vz)
       this.sphere_time = Time;
       this.sphere = Sphere;
       world.add(Sphere);
@@ -141,7 +135,7 @@ class Main_Game {
     this.player_list = {};
     this.rigid_list = {};
     this.numroom = Numroom;
-    //ゲーム状態の保持用
+    //ゲーム状態の保持用 0:menber参加待ち　1:ゲーム中　2:全ユーザーが出るのを待つ。10秒経つと自動的に3に移行する　3:新たにこのルームに人がくるのを待機する
     this.GameStartFlag = 0;
     //疎通確認用
     this.echoTime = 0;
@@ -172,18 +166,21 @@ class Main_Game {
             player.angle += 0.05;
           }
           if(movement.up){
-            player.power = player.power + 1;
-            if(player.power >= 6){
+            console.log(player.power);
+            player.power = player.power + 0.1;
+            if(player.power > 6){
               player.power = 3;
             }
           }
           if(movement.bottom){
-            player.power = player.power - 1;
+            console.log(player.power);
+            player.power = player.power - 0.1;
             if(player.power <= 2){
               player.power = 5;
             }
           }
           this.rigid_list[player.id].angle = player.angle;
+          this.rigid_list[player.id].power = player.power;
 
           if(player.sphere!=null&&player.loserFlag===false){
             player.sphere_time = player.sphere_time + TIME_STEP;
@@ -221,7 +218,7 @@ class Main_Game {
         if(((Object.keys(this.player_list).length)-(this.num_player))<=1){
           Object.values(this.player_list).forEach((player) => {
             if(!player.loserFlag){
-              io.to(player.socketId).emit('winer',player,this.numroom)
+              io.to(player.socketId).emit('winer',player,this.numroom);
             }
           });
           this.GameStartFlag = 2;
@@ -232,7 +229,8 @@ class Main_Game {
 
       if(this.GameStartFlag===2){
         this.endTimer = this.endTimer + TIME_STEP;
-        if(this.endTimer >= TIME_STEP * 30 * 15){
+        if(this.endTimer >= TIME_STEP * 30 * 10){
+          this.GameStartFlag = 3;
           end_MainGame(this.numroom);
         }
       }
@@ -270,6 +268,7 @@ class Main_Game {
       this.rigid_list[player.id].position = this.player_list[player.id].rigidBody.position;
       this.rigid_list[player.id].quaternion = this.player_list[player.id].rigidBody.quaternion;
       this.rigid_list[player.id].angle = this.player_list[player.id].angle;
+      this.rigid_list[player.id].power = 4;
       this.rigid_list[player.id].exit = false;
     });
   }
@@ -347,8 +346,11 @@ function createTable(){
 
 io.on('connection', onConnection);
 function onConnection(socket) {
+  console.log(socket.id);
+  //let roomN = {};
   //roomがなかった場合roomを作成し、socketを開放する。
   socket.on('createGame', function (Numroom) {
+    console.log('createGame');
     if(room_list[Numroom]===false||room_list[Numroom]===undefined){
       room_list[Numroom] = true;
       roomN = new Main_Game(Numroom);
@@ -358,7 +360,7 @@ function onConnection(socket) {
   });
 
   socket.on('game-start', function(config,Numroom) {
-    if(roomN.numroom === Numroom && roomN.GameStartFlag===0){
+    if(roomN.numroom === Numroom && (roomN.GameStartFlag===0||roomN.GameStartFlag===3)){
       if(Object.keys(roomN.player_list).length < 3){
         player = new Player({
           socketId: socket.id,
@@ -366,10 +368,8 @@ function onConnection(socket) {
         });
         roomN.player_list[player.id] = player;
         roomN.world.add(player.rigidBody);
-        //io.sockets.emit('yourID',player.id,Numroom);
         io.to(socket.id).emit('yourID',player.id,Numroom);
         if(Object.keys(roomN.player_list).length === 3){
-          playing_room[Numroom] = true;
           io.sockets.emit('addPlayer',roomN.player_list,Numroom);
           roomN.GameStartFlag = 1;
           roomN.set_rigid_list();
@@ -377,11 +377,9 @@ function onConnection(socket) {
           //main game start
           //roomN.Main_Game_Start(Numroom);
         }
-      }else{
+      }else if(Object.keys(roomN.player_list).length >= 3){
         io.to(socket.id).emit('over_menber',Numroom);
       }
-    }else{
-      io.to(socket.id).emit('over_menber',Numroom);
     }
   });
 
@@ -389,7 +387,7 @@ function onConnection(socket) {
     Object.values(roomN.player_list).forEach((player) => {
       if(player.id === playerId){
         if(player.sphere===null){
-          player.addF(roomN.world);
+          player.addF(roomN.world,player);
         }
       }
     });
@@ -406,17 +404,28 @@ function onConnection(socket) {
   });
 
   socket.on('Ack',function(playerId){
-    roomN.player_list[playerId].disconnectionFlag = false;
+    if(roomN!==undefined || roomN!==null){
+      roomN.player_list[playerId].disconnectionFlag = false;
+    }
   });
 
   socket.on('remove_body',function(playerId){
     delete roomN.rigid_list[playerId]
-  })
+  });
+
+  socket.on('end-game', function () {
+    delete roomN;
+  });
+
+  socket.on('disconnect',function(){
+    
+  });
 }
 
 function end_MainGame(Numroom){
-  delete room_baf[Numroom];
+  room_baf[Numroom] = null;
   room_list[Numroom] = false;
+  console.log('end-game');
 }
 
 function createShape(x,y,z,w,h,d,mass) {
@@ -453,7 +462,3 @@ app.get('/', (req, res) => {
 server.listen(PORT, function () {
   console.log('port 3000')
 });
-
-
-
-
