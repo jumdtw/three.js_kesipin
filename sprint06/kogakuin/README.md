@@ -60,7 +60,7 @@ three.js 公式
 socket.io doc
 - https://socket.io/docs/client-api/#io-url-options
 
-### 画層
+### 画像
 
 黒板
 - http://gahag.net/tag/%E9%BB%92%E6%9D%BF/

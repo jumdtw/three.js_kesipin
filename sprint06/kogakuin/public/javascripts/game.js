@@ -441,7 +441,6 @@ function createShape(w,h,d,flag) {
 //現状の人数
 let pastmenber = 0;
 socket.on('now_menber',function(menber,Numroom){
-    console.log('now_menber');
     if(numroom===Numroom){
         if(menber!=pastmenber){
             lists = document.getElementById('before_num');

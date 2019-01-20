@@ -200,6 +200,11 @@ class Main_Game {
         if(this.GameStartFlag!=0){
           io.sockets.emit('state', this.rigid_list,this.numroom);
         }
+        if(this.GameStartFlag===0){
+          if(Object.keys(this.player_list>=3)){
+            this.GameStartFlag = 1;
+          }
+        }
         if(this.GameStartFlag===1){
           if(((Object.keys(this.player_list).length)-(this.num_player))<=1){
             Object.values(this.player_list).forEach((player) => {
@@ -423,8 +428,10 @@ function onConnection(socket) {
   });
 
   socket.on('Ack',function(playerId){
-    if(roomN!==undefined || roomN!==null){
-      roomN.player_list[playerId].disconnectionFlag = false;
+    if(playerId!==-1){
+      if(roomN!==undefined || roomN!==null){
+        roomN.player_list[playerId].disconnectionFlag = false;
+      }
     }
   });
 
