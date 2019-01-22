@@ -68,6 +68,7 @@ class Player extends GameObject {
     this.socketId = obj.socketId;
     this.nickname = obj.nickname;
     this.rigidBody = createShape(0,30+TABLE_HIEGHT,0,1,0.7,2,10);
+    this.post_position = this.rigidBody.position;
     //打ち出す角度
     this.angle = Math.PI/2;
     this.movement = {};
@@ -77,7 +78,7 @@ class Player extends GameObject {
     this.sphere = null;
     this.sphere_time = 0;
     //turn制御用
-    this.turnFlag = false;
+    this.turnFlag = true;
     this.moveFlag = false;
     //負けか否か
     this.loserFlag = false;
@@ -201,6 +202,10 @@ class Main_Game {
               }
             }
 
+            if(player.post_position===player.rigidBody.position){
+              player.turnFlag = true;
+            }
+
             this.out_judge(player);
             if(player.loserFlag){
               this.num_player = this.num_player + 1;
@@ -244,6 +249,8 @@ class Main_Game {
             }
           }
 
+          /*
+
           //turn変更用
           if(this.can_moveFlag===true){
             this.turnTime_1sec = this. turnTime_1sec + TIME_STEP;
@@ -251,7 +258,7 @@ class Main_Game {
           if(this.turnTime_1sec > TIME_STEP * 30 * 1){
             this.turnTime_1sec = 0;
             this.Timecounter = this.Timecounter + 1;
-            io.sockets.emit('turntime',  turnchange- this.Timecounter,this.numroom);
+            io.sockets.emit('turntime',  turnchange - this.Timecounter,this.numroom);
             if(this.Timecounter >= turnchange){
               this.Timecounter = 0;
               this.alert_turn();
@@ -259,6 +266,8 @@ class Main_Game {
               this.can_moveFlag =false;
             }
           }
+
+          */
 
           //疎通確認
           this.echoTime = this.echoTime + TIME_STEP;
@@ -328,6 +337,7 @@ class Main_Game {
   }
 
 
+  /*
   //----------------------------------------AAAAAAAAAAAAAAAAAalert
   alert_turn(){
     this.turn_player = this.changeturn();
@@ -337,22 +347,24 @@ class Main_Game {
 
   changeturn(){
     let return_player;
-    if(this.player_counter>Object.keys(this.player_list).length){
-      this.player_counter = 1;
-    }
     let baf_counter = 1;
+    console.log(this.player_counter);
     Object.values(this.player_list).forEach((player) =>{
       if(baf_counter===this.player_counter){
         return_player = player;
-        this.player_counter = this.player_counter + 1;
       }else{
         baf_counter = baf_counter + 1;
       }
     });
+    this.player_counter = this.player_counter + 1;
+    if(this.player_counter>Object.keys(this.player_list).length){
+      this.player_counter = 1;
+    }
     return return_player;
   }
 
   //-------------------------------------------------------------
+  */
 
   Main_Game_Start(Numroom){
     /*
@@ -495,7 +507,9 @@ function onConnection(socket) {
     Object.values(roomN.player_list).forEach((player) => {
       if(roomN.GameStartFlag === 1){
         if(player.id === playerId){
-          player.movement = movement;
+          if(player.turnFlag===true){
+            player.movement = movement;
+          }
         }
       }
     });

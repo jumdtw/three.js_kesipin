@@ -492,6 +492,7 @@ socket.on('turntime',function(timercounter,Numroom){
     }
 });
 
+/*
 
 //誰のturnか知らせる。
 socket.on('Alert_turn',function(player,Numroom){
@@ -524,4 +525,6 @@ socket.on('hide-alert',function(Numroom){
     if(numroom===Numroom){
         $('#alert_turn').hide();
     }
-})
+});
+
+*/
