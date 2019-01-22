@@ -18,12 +18,22 @@
 three.js-cannon.js実験用
 - https://github.com/jumdtw/three.js_cannon.js
 
-- http://www.toriho-dai.com/number/
+ICS MEDIA
+- https://ics.media/tutorial-three/index.html
+
+サーバ処理などの参考
 - https://paiza.hatenablog.com/entry/paizacloud_online_multiplayer_game
+
+ベクトル計算(2Dの時)
 - http://marupeke296.com/
+
+衝突時の計算(２Dの時)
 - https://hakuhin.jp/as/collide.html
-- https://q-az.net/rain-drop-js/
+
+localstrage
 - http://wp.tech-style.info/archives/742
+
+three.jsの使い方参考
 - http://jsdo.it/cx20/qhUk  
 
 
@@ -55,8 +65,11 @@ add F
 - http://www7.plala.or.jp/kfb/program/stg2dvec.html 
 
 
-three.js 公式  
+three.js 公式ドキュメント  
 - https://threejs.org/ 
+
+cannon.js 公式ドキュメント
+- http://www.cannonjs.org/
 
 画面resize
 - https://ics.media/tutorial-three/renderer_resize.html
@@ -68,6 +81,9 @@ progressber.js
 - https://bagelee.com/design/javascript/create_progress_bars_with_progressbarjs/
 
 ### 画像
+
+数字部分
+- http://www.toriho-dai.com/number/
 
 黒板
 - http://gahag.net/tag/%E9%BB%92%E6%9D%BF/
