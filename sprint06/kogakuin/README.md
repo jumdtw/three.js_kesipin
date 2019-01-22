@@ -14,6 +14,10 @@
 ## 参考文献
 
 ### コーディング
+
+three.js-cannon.js実験用
+- https://github.com/jumdtw/three.js_cannon.js
+
 - http://www.toriho-dai.com/number/
 - https://paiza.hatenablog.com/entry/paizacloud_online_multiplayer_game
 - http://marupeke296.com/
@@ -59,6 +63,9 @@ three.js 公式
 
 socket.io doc
 - https://socket.io/docs/client-api/#io-url-options
+
+progressber.js 
+- https://bagelee.com/design/javascript/create_progress_bars_with_progressbarjs/
 
 ### 画像
 

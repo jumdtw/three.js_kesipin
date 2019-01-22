@@ -16,6 +16,7 @@ a:hover{
 }
 
 #start-screen{
+  display: none;
   width:100%; 
   height:100%; 
   display: flex; 
@@ -32,9 +33,11 @@ a:hover{
   align-items: center; 
   position:absolute; 
   z-index:10;
-  font-weight: 700;
+  font-weight: 900;
+  font-size: 30px;
   margin: auto;
   padding: 300px 0px 0px 0px;
+  color: rgb(175, 175, 175);
   background-color: rgba(128,128,128,0.5);
 }
 
@@ -54,7 +57,7 @@ a:hover{
 #not_entry{
   width:100%; 
   height:100%; 
-  display: none; 
+  display: none;
   align-items: center; 
   position:absolute; 
   z-index:10;
@@ -69,8 +72,12 @@ a:hover{
   align-items: center; 
   position:absolute; 
   z-index:10;
-  padding: 350px 0px 0px 0px;
-  background-color:rgba(128,128,128,0.5);
+  font-weight: 900;
+  font-size: 70px;
+  margin: auto;
+  padding: 300px 0px 0px 0px;
+  color: rgb(255, 0, 21);
+  background-color: rgba(128,128,128,0.5);
 }
 
 #Over{
@@ -140,13 +147,7 @@ a:hover{
   height:40%;
 }
 
-#operation{
-  width:40%;
-  height:40%;
-  color: red;
-  font-weight: 900;
-  font-size: 30px;
-}
+
 
 #user_table{
   display:table;
@@ -164,6 +165,48 @@ a:hover{
   padding:0px 0px 0px 460px; 
 }
 
+#now-power{
+  position: relative;
+  width:40%;
+  height:40%;
+  font-weight: 900;
+  font-size: 30px;
+}
+
+.now-power-cell{
+  display: inline-block;
+  margin: 200px 0px 0px 1260px;
+  border: 0px 0px 70px 0px;
+  padding: 0px 6px 0px 6px;
+  background-color: rgb(0, 68, 255);
+  color: black;
+}
+
+#now-time{
+  position: relative;
+  width:40%;
+  height:40%;
+  font-weight: 900;
+  font-size: 30px;
+}
+
+.now-time-cell{
+  display: inline-block;
+  margin: 190px 0px 0px 1260px;
+  border: 0px 0px 70px 0px;
+  padding: 0px 6px 0px 6px;
+  background-color:rgb(0, 68, 255);
+  color: black;
+}
+
+
+#operation{
+  width:40%;
+  height:40%;
+  font-weight: 900;
+  font-size: 30px;
+}
+
 .operation-cell{
   display:inline-block;
   margin: 0px 0px 50px 0px;
@@ -171,4 +214,10 @@ a:hover{
   padding: 0px 6px 0px 6px;
   background-color: rgb(0, 68, 255);
   color: white;
+}
+
+#container{
+  margin: 20px;
+  width: 100%;
+  height: 8px;
 }

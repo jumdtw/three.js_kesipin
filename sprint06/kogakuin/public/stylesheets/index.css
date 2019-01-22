@@ -1,5 +1,10 @@
-.row .BackGround{
-    background-image: url(../images/ayase.PNG);
+.album.py-5.bg-light{
+    background-image: url(../images/wood_texture.png);
+    background-size:cover;
+}
+
+.text-muted{
+    background-color: #343a40;
 }
 
 a {

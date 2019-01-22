@@ -7,6 +7,8 @@ var radius = 40
 var numroom = -1;
 var myplayerId = -1;
 
+
+var can_move_packet = false;
 var TIME_STEP = 1 / 30;
 var SCREEN_WIDTH = 465;
 var SCREEN_HEIGHT = 465;
@@ -40,6 +42,7 @@ window.onload = function(){
     // 初期化のために実行
     onResize();
     numroom = parseFloat(localStorage.getItem('roomNum'));
+    var container = document.getElementById('container');
 }
 
 // リサイズイベント発生時に実行
@@ -231,7 +234,10 @@ $(document).on('keydown', (event) => {
     
     //L
     if(event.keyCode===76){
-        socket.emit('shoot',myplayerId);
+        if(can_move_packet===true){
+            socket.emit('shoot',myplayerId);
+        }
+        $('alert_turn').show();
     }
     
     //D
@@ -254,7 +260,9 @@ $(document).on('keydown', (event) => {
         movement.bottom = true;
     }
 
-    socket.emit('movement', movement,myplayerId);
+    if(can_move_packet===true){
+        socket.emit('movement', movement,myplayerId);
+    }
 });
 
 $(document).on('keyup', (event) => {
@@ -278,7 +286,9 @@ $(document).on('keyup', (event) => {
     if(event.keyCode===83){
         movement.bottom = false;
     }
-    socket.emit('movement', movement,myplayerId);
+    if(can_move_packet){
+        socket.emit('movement', movement,myplayerId);
+    }
 });
 
 
@@ -288,6 +298,7 @@ socket.on('state', function(players,Numroom) {
         // position graphical object on physical object recursively
         Object.values(players).forEach((cannon_player)=>{
             let kesigomu = player_list[cannon_player.id];
+            if(cannon_player.id===myplayerId){displaypower(cannon_player.power);}
             if(cannon_player.exit===true){
                 scene.remove(kesigomu.line);
                 scene.remove(kesigomu.cone);
@@ -307,6 +318,18 @@ socket.on('state', function(players,Numroom) {
     }
 });
 
+function displaypower(Power){
+    let n = 2 ;	// 小数点第n位まで残す
+    Power = Math.floor( Power * Math.pow( 10, n ) ) / Math.pow( 10, n ) ;
+    element_power = document.getElementById('now-power');
+    broccoli = element_power.lastElementChild;
+    element_power.removeChild(broccoli);
+    now_power = Power; 
+    let element = document.createElement('p');
+    element.className = 'now-power-cell';
+    element.textContent = String(now_power);
+    document.getElementById('now-power').appendChild(element);
+}
 
 function drawangle(player){
     if(player.exit!==true){
@@ -353,8 +376,9 @@ function createcone(player){
     return cone;
 }
 
-
-//socket 
+socket.on('show_gamestart',function(){
+    $('#start-screen').show();
+});
 
 socket.on('dead', function(Numroom) {
     if(numroom===Numroom){
@@ -398,6 +422,7 @@ socket.on('Syc',function(Numroom){
 
 socket.on('addPlayer',function(players,Numroom){
     if(Numroom===numroom){
+        can_move_packet = true;
         Object.values(players).forEach((player)=>{
             player_list[player.id] = {}
             if(player.id===myplayerId){
@@ -455,20 +480,31 @@ socket.on('now_menber',function(menber,Numroom){
     }
 });
 
+socket.on('turntime',function(timercounter,Numroom){
+    if(numroom===Numroom){
+        lists = document.getElementById('now-time');
+        element_timer = lists.lastElementChild;
+        lists.removeChild(element_timer);
+        let element = document.createElement('p');
+        element.className = 'now-time-cell';
+        element.textContent = String(timercounter);
+        document.getElementById('now-time').appendChild(element);
+    }
+});
+
+
 //誰のturnか知らせる。
 socket.on('Alert_turn',function(player,Numroom){
     if(numroom===Numroom){
-        if(player.socketId!=socket.id){
+        if(player.id!=myplayerId){
             lists = document.getElementById('alert_turn');
             broccoli = lists.lastElementChild;
             lists.removeChild(broccoli);
             let element = document.createElement('p');
             element.className = 'alert';
-            element.textContent = String(player.nickname) + ' のturn';
+            element.textContent = String(player.nickname) + ' の  Turn';
             document.getElementById('alert_turn').appendChild(element);
-            $('alert_turn').show();
-            sleep(4000);
-            $('alert_turn').hide();
+            $('#alert_turn').show();
         }else{
             lists = document.getElementById('alert_turn');
             broccoli = lists.lastElementChild;
@@ -477,9 +513,15 @@ socket.on('Alert_turn',function(player,Numroom){
             element.className = 'alert';
             element.textContent = 'あなた' + ' のturn';
             document.getElementById('alert_turn').appendChild(element);
-            $('alert_turn').show();
-            sleep(4000);
-            $('alert_turn').hide();
+            $('#alert_turn').show();
+            //sleep(4000);
+            //$('alert_turn').hide();
         }
     }
 });
+
+socket.on('hide-alert',function(Numroom){
+    if(numroom===Numroom){
+        $('#alert_turn').hide();
+    }
+})

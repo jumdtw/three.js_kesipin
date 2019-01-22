@@ -11,11 +11,11 @@ const io = socketIO(server);
 const FWIDTH = 1000;
 const FHEIGHT = 1000;
 const PORT = 3000
-
-var TIME_STEP = 1 / 30;
-
+const TIME_STEP = 1 / 30;
 const TABLE_HIEGHT = 70;
 
+var turn_to_turn_time = 3;
+var turnchange = 5;
 var room_list = {};
 var room_baf = {};
 var Player_list = {};
@@ -77,6 +77,7 @@ class Player extends GameObject {
     this.sphere = null;
     this.sphere_time = 0;
     //turn制御用
+    this.turnFlag = false;
     this.moveFlag = false;
     //負けか否か
     this.loserFlag = false;
@@ -85,7 +86,8 @@ class Player extends GameObject {
   }
 
   addF(world,player) {
-    if(this.moveFlag === false){
+    if(this.turnFlag === true){
+      this.turnFlag = false;
       let ball_material,Sphere,shape,Vx,Vz;
       let Time = 0;
       let v0 = 10;
@@ -95,7 +97,6 @@ class Player extends GameObject {
       ball_material = new CANNON.Material('ball_material');
       ball_material.friction = 0.01;　//摩擦係数
       ball_material.restitution = 0.01; //反発係数
-
       shape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
       Sphere = new CANNON.Body({mass: 10});
       Sphere.material = ball_material;
@@ -136,6 +137,14 @@ class Main_Game {
     this.numroom = Numroom;
     //ゲーム状態の保持用 0:menber参加待ち　1:ゲーム中　2:全ユーザーが出るのを待つ。10秒経つと自動的に3に移行する　3:新たにこのルームに人がくるのを待機する
     this.GameStartFlag = 0;
+    //turn変更用
+    this.turn_to_turn_counter = 0;
+    this.turn_to_turn_flag = false;
+    this.can_moveFlag = true;
+    this.player_counter = 1;
+    this.turnTime_1sec = 0;
+    this.Timecounter = 0;
+    this.turn_player;
     //疎通確認用
     this.echoTime = 0;
     this.echoFlag = false;
@@ -159,24 +168,27 @@ class Main_Game {
         Object.values(this.player_list).forEach((player) => {
           if(this.GameStartFlag === 1){
             const movement = player.movement;
-            if (movement.left) {
-              player.angle -= 0.05;
-            }
-            if (movement.right) {
-              player.angle += 0.05;
-            }
-            if(movement.up){
-              player.power = player.power + 0.1;
-              if(player.power > 6){
-                player.power = 3;
+            if(player.turnFlag===true){
+              if (movement.left) {
+                player.angle -= 0.05;
+              }
+              if (movement.right) {
+                player.angle += 0.05;
+              }
+              if(movement.up){
+                player.power = player.power + 0.01;
+                if(player.power > 6.0){
+                  player.power = 3;
+                }
+              }
+              if(movement.bottom){
+                player.power = player.power - 0.01;
+                if(player.power < 3.0){
+                  player.power = 6;
+                }
               }
             }
-            if(movement.bottom){
-              player.power = player.power - 0.1;
-              if(player.power <= 2){
-                player.power = 5;
-              }
-            }
+            
             this.rigid_list[player.id].angle = player.angle;
             this.rigid_list[player.id].power = player.power;
 
@@ -197,14 +209,18 @@ class Main_Game {
             io.sockets.emit('now_menber',Object.keys(this.player_list).length,this.numroom)
           }
         });
+
+
         if(this.GameStartFlag!=0){
           io.sockets.emit('state', this.rigid_list,this.numroom);
         }
+
         if(this.GameStartFlag===0){
           if(Object.keys(this.player_list>=3)){
             this.GameStartFlag = 1;
           }
         }
+
         if(this.GameStartFlag===1){
           if(((Object.keys(this.player_list).length)-(this.num_player))<=1){
             Object.values(this.player_list).forEach((player) => {
@@ -216,6 +232,33 @@ class Main_Game {
           }else{
             this.num_player = 0;
           } 
+
+          if(this.turn_to_turn_flag===true){
+            this.turn_to_turn_counter = this.turn_to_turn_counter + TIME_STEP;
+            if(this.turn_to_turn_counter>TIME_STEP * 30 * turn_to_turn_time){
+              this.turn_to_turn_counter = 0;
+              this.turn_player.turnFlag = false;
+              io.sockets.emit('hide-alert',this.numroom);
+              this.can_moveFlag =true;
+              this.turn_to_turn_flag = false;
+            }
+          }
+
+          //turn変更用
+          if(this.can_moveFlag===true){
+            this.turnTime_1sec = this. turnTime_1sec + TIME_STEP;
+          }
+          if(this.turnTime_1sec > TIME_STEP * 30 * 1){
+            this.turnTime_1sec = 0;
+            this.Timecounter = this.Timecounter + 1;
+            io.sockets.emit('turntime',  turnchange- this.Timecounter,this.numroom);
+            if(this.Timecounter >= turnchange){
+              this.Timecounter = 0;
+              this.alert_turn();
+              this.turn_to_turn_flag = true;
+              this.can_moveFlag =false;
+            }
+          }
 
           //疎通確認
           this.echoTime = this.echoTime + TIME_STEP;
@@ -233,7 +276,7 @@ class Main_Game {
 
         if(this.GameStartFlag===2){
           this.endTimer = this.endTimer + TIME_STEP;
-          if(this.endTimer >= TIME_STEP * 30 * 10){
+          if(this.endTimer >= TIME_STEP * 30 * 3){
             this.GameStartFlag = 3;
             end_MainGame(this.numroom);
           }
@@ -283,6 +326,33 @@ class Main_Game {
       this.rigid_list[player.id].exit = false;
     });
   }
+
+
+  //----------------------------------------AAAAAAAAAAAAAAAAAalert
+  alert_turn(){
+    this.turn_player = this.changeturn();
+    this.turn_player.turnFlag = true;
+    io.sockets.emit('Alert_turn',this.turn_player,this.numroom);
+  }
+
+  changeturn(){
+    let return_player;
+    if(this.player_counter>Object.keys(this.player_list).length){
+      this.player_counter = 1;
+    }
+    let baf_counter = 1;
+    Object.values(this.player_list).forEach((player) =>{
+      if(baf_counter===this.player_counter){
+        return_player = player;
+        this.player_counter = this.player_counter + 1;
+      }else{
+        baf_counter = baf_counter + 1;
+      }
+    });
+    return return_player;
+  }
+
+  //-------------------------------------------------------------
 
   Main_Game_Start(Numroom){
     /*
@@ -367,6 +437,12 @@ function onConnection(socket) {
       room_list[Numroom].number = Numroom;
       console.log('connect succesfull room');
     }
+    io.to(socket.id).emit('show_gamestart');
+  });
+
+  socket.on('exist',function(Numroom){
+    room_list[Numroom] = {};
+    room_list[Numroom].flag = true; 
   });
 
   socket.on('game-start', function(config,Numroom) {
@@ -416,21 +492,21 @@ function onConnection(socket) {
   });
 
   socket.on('movement', function (movement,playerId) {
-    if(roomN!==undefined){
-      Object.values(roomN.player_list).forEach((player) => {
-        if(roomN.GameStartFlag === 1){
-          if(player.id === playerId){
-            player.movement = movement;
-          }
+    Object.values(roomN.player_list).forEach((player) => {
+      if(roomN.GameStartFlag === 1){
+        if(player.id === playerId){
+          player.movement = movement;
         }
-      });
-    }
+      }
+    });
   });
 
   socket.on('Ack',function(playerId){
     if(playerId!==-1){
       if(roomN!==undefined || roomN!==null){
-        roomN.player_list[playerId].disconnectionFlag = false;
+        if(roomN.player_list[playerId]!==undefined){
+          roomN.player_list[playerId].disconnectionFlag = false;
+        }
       }
     }
   });
@@ -452,7 +528,7 @@ function end_MainGame(Numroom){
   roomN = undefined;
   playing_room[Numroom] = false;
   room_baf[Numroom] = undefined;
-  room_list[Numroom].flag = false;
+  room_list[Numroom] = {};
   Player_list[Numroom] = {};
   console.log('end-game');
 }
