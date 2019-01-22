@@ -1,7 +1,7 @@
 //var socket = io();
 //var socket = io.connect("localhost:3000", {'force new connection': true});
 //var socket = io.connect("http://localhost", {'force new connection': true});
-var socket = io('localhost:3000',{forceNew: true});
+var socket = io('133.80.56.41:3000',{forceNew: true});
 
 window.onload = function(){
     socket.on('reconnect');
